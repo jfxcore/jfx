@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +35,7 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
+import javafx.util.ValueConverter;
 import org.junit.Test;
 
 public class ObjectPropertyTest {
@@ -137,6 +139,11 @@ public class ObjectPropertyTest {
 
         @Override
         public void bind(ObservableValue<? extends Object> observable) {
+            fail("Not in use");
+        }
+
+        @Override
+        public <S> void bind(ObservableValue<? extends S> observable, ValueConverter<S, Object> converter) {
             fail("Not in use");
         }
 

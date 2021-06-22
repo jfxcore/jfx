@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,19 +28,48 @@ package com.sun.javafx.binding;
 
 import javafx.beans.WeakListener;
 import javafx.collections.*;
+import javafx.util.ValueConverter;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  */
-public class ContentBinding {
+public abstract class ContentBinding implements WeakListener {
+
+    protected abstract WeakReference<?> getSourceRef();
+
+    @Override
+    public boolean wasGarbageCollected() {
+        return getSourceRef().get() == null;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+
+        final Object source1 = getSourceRef().get();
+        if (source1 == null) {
+            return false;
+        }
+
+        if (obj instanceof ContentBinding) {
+            final ContentBinding other = (ContentBinding)obj;
+            final Object source2 = other.getSourceRef().get();
+            return source1 == source2;
+        }
+        return false;
+    }
 
     private static void checkParameters(Object property1, Object property2) {
         if ((property1 == null) || (property2 == null)) {
-            throw new NullPointerException("Both parameters must be specified.");
+            throw new NullPointerException("All parameters must be specified.");
         }
         if (property1 == property2) {
             throw new IllegalArgumentException("Cannot bind object to itself");
@@ -80,6 +110,62 @@ public class ContentBinding {
         return contentBinding;
     }
 
+    public static <S, E> Object bind(List<E> list1, ObservableList<? extends S> list2, ValueConverter<S, E> converter) {
+        checkParameters(list1, list2);
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+        final ConvertingListContentBinding<S, E> contentBinding = new ConvertingListContentBinding<>(list1, converter);
+        List<E> converted = new ArrayList<>(list2.size());
+        for (S item : list2) {
+            converted.add(converter.convert(item));
+        }
+
+        if (list1 instanceof ObservableList) {
+            ((ObservableList)list1).setAll(converted);
+        } else {
+            list1.clear();
+            list1.addAll(converted);
+        }
+        list2.removeListener(contentBinding);
+        list2.addListener(contentBinding);
+        return contentBinding;
+    }
+
+    public static <S, E> Object bind(Set<E> set1, ObservableSet<? extends S> set2, ValueConverter<S, E> converter) {
+        checkParameters(set1, set2);
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+        final ConvertingSetContentBinding<S, E> contentBinding = new ConvertingSetContentBinding<>(set1, converter);
+        List<E> converted = new ArrayList<>(set2.size());
+        for (S item : set2) {
+            converted.add(converter.convert(item));
+        }
+        set1.clear();
+        set1.addAll(converted);
+        set2.removeListener(contentBinding);
+        set2.addListener(contentBinding);
+        return contentBinding;
+    }
+
+    public static <K, S, V> Object bind(Map<K, V> map1, ObservableMap<? extends K, ? extends S> map2, ValueConverter<S, V> converter) {
+        checkParameters(map1, map2);
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+        final ConvertingMapContentBinding<K, S, V> contentBinding = new ConvertingMapContentBinding<>(map1, converter);
+        Map<K, V> converted = new HashMap<>(map2.size());
+        for (Map.Entry<? extends K, ? extends S> entry : map2.entrySet()) {
+            converted.put(entry.getKey(), converter.convert(entry.getValue()));
+        }
+        map1.clear();
+        map1.putAll(converted);
+        map2.removeListener(contentBinding);
+        map2.addListener(contentBinding);
+        return contentBinding;
+    }
+
     public static void unbind(Object obj1, Object obj2) {
         checkParameters(obj1, obj2);
         if ((obj1 instanceof List) && (obj2 instanceof ObservableList)) {
@@ -91,7 +177,7 @@ public class ContentBinding {
         }
     }
 
-    private static class ListContentBinding<E> implements ListChangeListener<E>, WeakListener {
+    private static class ListContentBinding<E> extends ContentBinding implements ListChangeListener<E> {
 
         private final WeakReference<List<E>> listRef;
 
@@ -122,8 +208,8 @@ public class ContentBinding {
         }
 
         @Override
-        public boolean wasGarbageCollected() {
-            return listRef.get() == null;
+        protected WeakReference<?> getSourceRef() {
+            return listRef;
         }
 
         @Override
@@ -131,28 +217,9 @@ public class ContentBinding {
             final List<E> list = listRef.get();
             return (list == null)? 0 : list.hashCode();
         }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-
-            final List<E> list1 = listRef.get();
-            if (list1 == null) {
-                return false;
-            }
-
-            if (obj instanceof ListContentBinding) {
-                final ListContentBinding<?> other = (ListContentBinding<?>) obj;
-                final List<?> list2 = other.listRef.get();
-                return list1 == list2;
-            }
-            return false;
-        }
     }
 
-    private static class SetContentBinding<E> implements SetChangeListener<E>, WeakListener {
+    private static class SetContentBinding<E> extends ContentBinding implements SetChangeListener<E>{
 
         private final WeakReference<Set<E>> setRef;
 
@@ -175,8 +242,8 @@ public class ContentBinding {
         }
 
         @Override
-        public boolean wasGarbageCollected() {
-            return setRef.get() == null;
+        protected WeakReference<?> getSourceRef() {
+            return setRef;
         }
 
         @Override
@@ -184,28 +251,9 @@ public class ContentBinding {
             final Set<E> set = setRef.get();
             return (set == null)? 0 : set.hashCode();
         }
-
-        @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
-
-            final Set<E> set1 = setRef.get();
-            if (set1 == null) {
-                return false;
-            }
-
-            if (obj instanceof SetContentBinding) {
-                final SetContentBinding<?> other = (SetContentBinding<?>) obj;
-                final Set<?> set2 = other.setRef.get();
-                return set1 == set2;
-            }
-            return false;
-        }
     }
 
-    private static class MapContentBinding<K, V> implements MapChangeListener<K, V>, WeakListener {
+    private static class MapContentBinding<K, V> extends ContentBinding implements MapChangeListener<K, V> {
 
         private final WeakReference<Map<K, V>> mapRef;
 
@@ -229,8 +277,8 @@ public class ContentBinding {
         }
 
         @Override
-        public boolean wasGarbageCollected() {
-            return mapRef.get() == null;
+        protected WeakReference<?> getSourceRef() {
+            return mapRef;
         }
 
         @Override
@@ -238,24 +286,134 @@ public class ContentBinding {
             final Map<K, V> map = mapRef.get();
             return (map == null)? 0 : map.hashCode();
         }
+    }
+
+    private static class ConvertingListContentBinding<S, E> extends ContentBinding implements ListChangeListener<S> {
+        private final WeakReference<List<E>> listRef;
+        private final ValueConverter<S, E> converter;
+
+        public ConvertingListContentBinding(List<E> list, ValueConverter<S, E> converter) {
+            this.listRef = new WeakReference<List<E>>(list);
+            this.converter = converter;
+        }
 
         @Override
-        public boolean equals(Object obj) {
-            if (this == obj) {
-                return true;
-            }
+        public void onChanged(Change<? extends S> change) {
+            final List<E> list = listRef.get();
+            if (list == null) {
+                change.getList().removeListener(this);
+            } else {
+                while (change.next()) {
+                    int from = change.getFrom();
+                    int to = change.getTo();
 
-            final Map<K, V> map1 = mapRef.get();
-            if (map1 == null) {
-                return false;
-            }
+                    if (change.wasPermutated()) {
+                        List<E> subList = list.subList(from, to);
+                        List<E> copy = new ArrayList<>(subList);
 
-            if (obj instanceof MapContentBinding) {
-                final MapContentBinding<?, ?> other = (MapContentBinding<?, ?>) obj;
-                final Map<?, ?> map2 = other.mapRef.get();
-                return map1 == map2;
+                        for (int oldIndex = from; oldIndex < to; ++oldIndex) {
+                            int newIndex = change.getPermutation(oldIndex);
+                            copy.set(newIndex - from, list.get(oldIndex));
+                        }
+
+                        subList.clear();
+                        list.addAll(from, copy);
+                    } else {
+                        if (change.wasRemoved()) {
+                            list.subList(from, from + change.getRemovedSize()).clear();
+                        }
+                        if (change.wasAdded()) {
+                            List<E> newList = new ArrayList<>(change.getAddedSubList().size());
+                            for (S item : change.getAddedSubList()) {
+                                newList.add(converter.convert(item));
+                            }
+                            list.addAll(from, newList);
+                        }
+                    }
+                }
             }
-            return false;
+        }
+
+        @Override
+        protected WeakReference<?> getSourceRef() {
+            return listRef;
+        }
+
+        @Override
+        public int hashCode() {
+            final List<E> list = listRef.get();
+            return (list == null)? 0 : list.hashCode();
+        }
+    }
+
+    private static class ConvertingSetContentBinding<S, E> extends ContentBinding implements SetChangeListener<S>{
+        private final WeakReference<Set<E>> setRef;
+        private final ValueConverter<S, E> converter;
+
+        public ConvertingSetContentBinding(Set<E> set, ValueConverter<S, E> converter) {
+            this.setRef = new WeakReference<Set<E>>(set);
+            this.converter = converter;
+        }
+
+        @Override
+        public void onChanged(Change<? extends S> change) {
+            final Set<E> set = setRef.get();
+            if (set == null) {
+                change.getSet().removeListener(this);
+            } else {
+                if (change.wasRemoved()) {
+                    set.remove(converter.convert(change.getElementRemoved()));
+                } else {
+                    set.add(converter.convert(change.getElementAdded()));
+                }
+            }
+        }
+
+        @Override
+        protected WeakReference<?> getSourceRef() {
+            return setRef;
+        }
+
+        @Override
+        public int hashCode() {
+            final Set<E> set = setRef.get();
+            return (set == null)? 0 : set.hashCode();
+        }
+    }
+
+    private static class ConvertingMapContentBinding<K, S, V> extends ContentBinding implements MapChangeListener<K, S>{
+        private final WeakReference<Map<K, V>> mapRef;
+        private final ValueConverter<S, V> converter;
+
+        public ConvertingMapContentBinding(Map<K, V> map, ValueConverter<S, V> converter) {
+            this.mapRef = new WeakReference<Map<K, V>>(map);
+            this.converter = converter;
+        }
+
+        @Override
+        public void onChanged(Change<? extends K, ? extends S> change) {
+            final Map<K, V> map = mapRef.get();
+            if (map == null) {
+                change.getMap().removeListener(this);
+            } else {
+                if (change.wasRemoved()) {
+                    map.remove(change.getKey());
+                }
+                if (change.wasAdded()) {
+                    map.put(change.getKey(), converter.convert(change.getValueAdded()));
+                }
+            }
+        }
+
+        @Override
+        protected WeakReference<?> getSourceRef() {
+            return mapRef;
+        }
+
+        @Override
+        public int hashCode() {
+            final Map<K, V> map = mapRef.get();
+            return (map == null)? 0 : map.hashCode();
         }
     }
 }

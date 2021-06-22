@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +31,11 @@ import java.lang.ref.WeakReference;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakListener;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.*;
+import javafx.util.ValueConverter;
 
 /**
  * The class {@code MapPropertyBase} is the base class for a property
@@ -283,6 +286,25 @@ public abstract class MapPropertyBase<K, V> extends MapProperty<K, V> {
     }
 
     @Override
+    public <S> void bind(ObservableValue<? extends S> newObservable, ValueConverter<S, ObservableMap<K, V>> converter) {
+        if (newObservable == null) {
+            throw new NullPointerException("Cannot bind to null");
+        }
+
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+
+        unbind();
+        observable = new ConvertingValueWrapper<>(newObservable, converter);
+        if (listener == null) {
+            listener = new Listener<>(this);
+        }
+        observable.addListener(listener);
+        markInvalid(value);
+    }
+
+    @Override
     public void unbind() {
         if (observable != null) {
             value = observable.getValue();
@@ -341,6 +363,27 @@ public abstract class MapPropertyBase<K, V> extends MapProperty<K, V> {
         @Override
         public boolean wasGarbageCollected() {
             return wref.get() == null;
+        }
+    }
+
+    private static class ConvertingValueWrapper<S, K, V> extends ObjectBinding<ObservableMap<K, V>> {
+        private final ObservableValue<? extends S> observable;
+        private final ValueConverter<S, ObservableMap<K, V>> converter;
+
+        public ConvertingValueWrapper(ObservableValue<? extends S> observable, ValueConverter<S, ObservableMap<K, V>> converter) {
+            this.observable = observable;
+            this.converter = converter;
+            bind(observable);
+        }
+
+        @Override
+        protected ObservableMap<K, V> computeValue() {
+            return converter.convert(observable.getValue());
+        }
+
+        @Override
+        public void dispose() {
+            unbind(observable);
         }
     }
 }

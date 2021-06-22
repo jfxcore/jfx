@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +31,12 @@ import java.lang.ref.WeakReference;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.WeakListener;
+import javafx.beans.binding.ObjectBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.util.ValueConverter;
 
 /**
  * The class {@code ListPropertyBase} is the base class for a property
@@ -282,6 +285,25 @@ public abstract class ListPropertyBase<E> extends ListProperty<E> {
     }
 
     @Override
+    public <S> void bind(ObservableValue<? extends S> newObservable, ValueConverter<S, ObservableList<E>> converter) {
+        if (newObservable == null) {
+            throw new NullPointerException("Cannot bind to null");
+        }
+
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+
+        unbind();
+        observable = new ConvertingValueWrapper<>(newObservable, converter);
+        if (listener == null) {
+            listener = new Listener<>(this);
+        }
+        observable.addListener(listener);
+        markInvalid(value);
+    }
+
+    @Override
     public void unbind() {
         if (observable != null) {
             value = observable.getValue();
@@ -340,6 +362,27 @@ public abstract class ListPropertyBase<E> extends ListProperty<E> {
         @Override
         public boolean wasGarbageCollected() {
             return wref.get() == null;
+        }
+    }
+
+    private static class ConvertingValueWrapper<S, E> extends ObjectBinding<ObservableList<E>> {
+        private final ObservableValue<? extends S> observable;
+        private final ValueConverter<S, ObservableList<E>> converter;
+
+        public ConvertingValueWrapper(ObservableValue<? extends S> observable, ValueConverter<S, ObservableList<E>> converter) {
+            this.observable = observable;
+            this.converter = converter;
+            bind(observable);
+        }
+
+        @Override
+        protected ObservableList<E> computeValue() {
+            return converter.convert(observable.getValue());
+        }
+
+        @Override
+        public void dispose() {
+            unbind(observable);
         }
     }
 }

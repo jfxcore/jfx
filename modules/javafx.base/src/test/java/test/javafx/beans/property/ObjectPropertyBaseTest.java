@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,10 +46,10 @@ public class ObjectPropertyBaseTest {
     private static final String NO_NAME_1 = null;
     private static final String NO_NAME_2 = "";
     private static final Object UNDEFINED = new Object();
-    private static final Object VALUE_1a = new Object();
-    private static final Object VALUE_1b = new Object();
-    private static final Object VALUE_2a = new Object();
-    private static final Object VALUE_2b = new Object();
+    private static final Object VALUE_1a = new Object() { public String toString() { return "VALUE_1a"; } };
+    private static final Object VALUE_1b = new Object() { public String toString() { return "VALUE_1b"; } };
+    private static final Object VALUE_2a = new Object() { public String toString() { return "VALUE_2a"; } };
+    private static final Object VALUE_2b = new Object() { public String toString() { return "VALUE_2b"; } };
 
     private ObjectPropertyMock property;
     private InvalidationListenerMock invalidationListener;
@@ -273,6 +274,70 @@ public class ObjectPropertyBaseTest {
         assertEquals(VALUE_1a, property.get());
         property.check(2);
         changeListener.check(property, VALUE_1b, VALUE_1a, 1);
+    }
+
+    @Test
+    public void testLazyBind_conversion() {
+        attachInvalidationListener();
+        final ObservableObjectValueStub<Object> v = new ObservableObjectValueStub<Object>(VALUE_1a);
+
+        property.bind(v, Object::toString);
+        assertEquals("VALUE_1a", property.get());
+        assertTrue(property.isBound());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding once
+        v.set(VALUE_2a);
+        assertEquals("VALUE_2a", property.get());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding twice without reading
+        v.set(VALUE_1a);
+        v.set(VALUE_1b);
+        assertEquals("VALUE_1b", property.get());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding twice to same value
+        v.set(VALUE_1a);
+        v.set(VALUE_1a);
+        assertEquals("VALUE_1a", property.get());
+        property.check(1);
+        invalidationListener.check(property, 1);
+    }
+
+    @Test
+    public void testEagerBind_conversion() {
+        attachChangeListener();
+        final ObservableObjectValueStub<Object> v = new ObservableObjectValueStub<Object>(VALUE_1a);
+
+        property.bind(v, Object::toString);
+        assertEquals("VALUE_1a", property.get());
+        assertTrue(property.isBound());
+        property.check(1);
+        changeListener.check(property, null, "VALUE_1a", 1);
+
+        // change binding once
+        v.set(VALUE_2a);
+        assertEquals("VALUE_2a", property.get());
+        property.check(1);
+        changeListener.check(property, "VALUE_1a", "VALUE_2a", 1);
+
+        // change binding twice without reading
+        v.set(VALUE_1a);
+        v.set(VALUE_1b);
+        assertEquals("VALUE_1b", property.get());
+        property.check(2);
+        changeListener.check(property, "VALUE_1a", "VALUE_1b", 2);
+
+        // change binding twice to same value
+        v.set(VALUE_1a);
+        v.set(VALUE_1a);
+        assertEquals("VALUE_1a", property.get());
+        property.check(2);
+        changeListener.check(property, "VALUE_1b", "VALUE_1a", 1);
     }
 
     @Test(expected=NullPointerException.class)

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +31,8 @@ import java.util.ListIterator;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.ListExpression;
 import javafx.collections.ObservableList;
+import javafx.util.BidirectionalValueConverter;
+import javafx.util.ValueConverter;
 
 /**
  * Superclass for all readonly properties wrapping an {@link javafx.collections.ObservableList}.
@@ -67,6 +70,28 @@ public abstract class ReadOnlyListProperty<E> extends ListExpression<E>
     }
 
     /**
+     * Creates a bidirectional content binding of the {@link javafx.collections.ObservableList}, that is
+     * wrapped in this {@code ReadOnlyListProperty}, and another {@code ObservableList}.
+     * <p>
+     * A converting bidirectional binding is a binding that works in both directions. If
+     * two properties {@code a} and {@code b} are linked with a converting bidirectional
+     * binding and the content of {@code a} changes, the content of {@code b} is synchronized
+     * such that it contains the projections of all elements of {@code a} that were obtained
+     * by converting each element with the specified {@code BidirectionalValueConverter}.
+     * And vice versa, if the content of {@code b} changes, the content of {@code a} is
+     * synchronized likewise.
+     *
+     * @param <S> the type of the elements contained in the source list
+     * @param list the {@code ObservableList} this property should be bound to
+     * @param converter the converter that can convert objects of type {@code S} and {@code E}
+     * @throws NullPointerException if {@code list} or {@code converter} is {@code null}
+     * @throws IllegalArgumentException if {@code list} is the same list that this {@code ReadOnlyListProperty} points to
+     */
+    public <S> void bindContentBidirectional(ObservableList<S> list, BidirectionalValueConverter<S, E> converter) {
+        Bindings.bindContentBidirectional(this, list, converter);
+    }
+
+    /**
      * Deletes a bidirectional content binding between the {@link javafx.collections.ObservableList}, that is
      * wrapped in this {@code ReadOnlyListProperty}, and another {@code Object}.
      *
@@ -92,6 +117,25 @@ public abstract class ReadOnlyListProperty<E> extends ListExpression<E>
      */
     public void bindContent(ObservableList<E> list) {
         Bindings.bindContent(this, list);
+    }
+
+    /**
+     * Creates a converting content binding between the {@link javafx.collections.ObservableList}, that is
+     * wrapped in this {@code ReadOnlyListProperty}, and another {@code ObservableList}.
+     * <p>
+     * A converting content binding ensures that the wrapped {@code ObservableList} contains projections of
+     * all elements of the other list by converting each element with the specified {@code ValueConverter}.
+     * If the content of the other list changes, the wrapped list will be updated automatically.
+     * Once the wrapped list is bound to another list, you must not change it directly.
+     *
+     * @param <S> the type of the elements contained in the source list
+     * @param list the {@code ObservableList} this property should be bound to
+     * @param converter the converter that can convert an object of type {@code S} to an object of type {@code E}
+     * @throws NullPointerException if {@code list} or {@code converter} is {@code null}
+     * @throws IllegalArgumentException if {@code list} is the same list that this {@code ReadOnlyListProperty} points to
+     */
+    public <S> void bindContent(ObservableList<S> list, ValueConverter<S, E> converter) {
+        Bindings.bindContent(this, list, converter);
     }
 
     /**

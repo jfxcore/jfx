@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +31,12 @@ import com.sun.javafx.property.MethodHelper;
 import com.sun.javafx.property.adapter.Disposer;
 import com.sun.javafx.property.adapter.PropertyDescriptor;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.property.StringProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableStringValue;
 import javafx.beans.value.ObservableValue;
+import javafx.util.ValueConverter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -174,6 +178,25 @@ public final class JavaBeanStringProperty extends StringProperty implements Java
      * {@inheritDoc}
      */
     @Override
+    public <S> void bind(ObservableValue<? extends S> observable, ValueConverter<S, String> converter) {
+        if (observable == null) {
+            throw new NullPointerException("Cannot bind to null");
+        }
+
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+
+        unbind();
+        this.observable = new ConvertingValueWrapper<>(observable, converter);
+        this.observable.addListener(listener);
+        set(((ObservableStringValue)this.observable).get());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void unbind() {
         if (observable != null) {
             observable.removeListener(listener);
@@ -252,5 +275,26 @@ public final class JavaBeanStringProperty extends StringProperty implements Java
     public void dispose() {
         descriptor.removeListener(listener);
 
+    }
+
+    private static class ConvertingValueWrapper<S> extends StringBinding {
+        private final ObservableValue<? extends S> observable;
+        private final ValueConverter<S, String> converter;
+
+        public ConvertingValueWrapper(ObservableValue<? extends S> observable, ValueConverter<S, String> converter) {
+            this.observable = observable;
+            this.converter = converter;
+            bind(observable);
+        }
+
+        @Override
+        protected String computeValue() {
+            return converter.convert(observable.getValue());
+        }
+
+        @Override
+        public void dispose() {
+            unbind(observable);
+        }
     }
 }

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +26,8 @@
 
 package test.javafx.beans.property;
 
+import javafx.util.BidirectionalValueConverter;
+import javafx.util.ValueConverter;
 import test.com.sun.javafx.binding.ExpressionHelperUtility;
 import java.util.Arrays;
 import java.util.List;
@@ -96,9 +99,11 @@ public class PropertyBaseTest<T> {
         }
 
         @Override public void bind(ObservableValue<? extends Number> observable) {}
+        @Override public <S> void bind(ObservableValue<? extends S> observable, ValueConverter<S, Number> converter) {}
         @Override public void unbind() {}
         @Override public boolean isBound() { return false; }
         @Override public void bindBidirectional(Property<Number> other) {}
+        @Override public <S> void bindBidirectional(Property<S> other, BidirectionalValueConverter<S, Number> converter) {}
         @Override public void unbindBidirectional(Property<Number> other) {}
 
         @Override public Object getBean() { return null; }

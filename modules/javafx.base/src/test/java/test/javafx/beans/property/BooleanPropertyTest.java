@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +29,7 @@ package test.javafx.beans.property;
 import javafx.beans.InvalidationListener;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.util.ValueConverter;
 import test.com.sun.javafx.binding.ErrorLoggingUtiltity;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
@@ -182,6 +184,11 @@ public class BooleanPropertyTest {
 
         @Override
         public void bind(ObservableValue<? extends Boolean> observable) {
+            fail("Not in use");
+        }
+
+        @Override
+        public <S> void bind(ObservableValue<? extends S> observable, ValueConverter<S, Boolean> converter) {
             fail("Not in use");
         }
 

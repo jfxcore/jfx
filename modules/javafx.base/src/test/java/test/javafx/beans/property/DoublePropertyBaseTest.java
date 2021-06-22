@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -351,6 +352,72 @@ public class DoublePropertyBaseTest {
         assertEquals(0.0, property.get(), EPSILON);
         property.check(1);
         changeListener.check(property, value1, 0.0, 1);
+    }
+
+    @Test
+    public void testLazyBind_conversion() {
+        attachInvalidationListener();
+        final ObservableDoubleValueStub v = new ObservableDoubleValueStub(Math.PI);
+        final double C = 5;
+
+        property.bind(v, d -> d.doubleValue() + C);
+        assertEquals(Math.PI + C, property.get(), EPSILON);
+        assertTrue(property.isBound());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding once
+        v.set(Math.E);
+        assertEquals(Math.E + C, property.get(), EPSILON);
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding twice without reading
+        v.set(Math.PI);
+        v.set(-Math.PI);
+        assertEquals(-Math.PI + C, property.get(), EPSILON);
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding twice to same value
+        v.set(Math.PI);
+        v.set(Math.PI);
+        assertEquals(Math.PI + C, property.get(), EPSILON);
+        property.check(1);
+        invalidationListener.check(property, 1);
+    }
+
+    @Test
+    public void testEagerBind_conversion() {
+        attachChangeListener();
+        final ObservableDoubleValueStub v = new ObservableDoubleValueStub(Math.PI);
+        final double C = 5;
+
+        property.bind(v, d -> d.doubleValue() + C);
+        assertEquals(Math.PI + C, property.get(), EPSILON);
+        assertTrue(property.isBound());
+        property.check(1);
+        changeListener.check(property, 0.0, Math.PI + C, 1);
+
+        // change binding once
+        v.set(Math.E);
+        assertEquals(Math.E + C, property.get(), EPSILON);
+        property.check(1);
+        changeListener.check(property, Math.PI + C, Math.E + C, 1);
+
+        // change binding twice without reading
+        v.set(Math.PI);
+        v.set(-Math.PI);
+        assertEquals(-Math.PI + C, property.get(), EPSILON);
+        property.check(2);
+        changeListener.check(property, Math.PI + C, -Math.PI + C, 2);
+
+        // change binding twice to same value
+        v.set(Math.PI);
+        v.set(Math.PI);
+        assertEquals(Math.PI + C, property.get(), EPSILON);
+        property.check(2);
+        changeListener.check(property, -Math.PI + C, Math.PI + C, 1);
     }
 
     @Test(expected=NullPointerException.class)

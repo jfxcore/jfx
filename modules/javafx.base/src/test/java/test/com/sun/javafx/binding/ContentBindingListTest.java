@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +30,7 @@ import com.sun.javafx.binding.ContentBinding;
 import javafx.beans.binding.Bindings;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.util.ValueConverter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -84,6 +86,40 @@ public class ContentBindingListTest {
         assertEquals(list2_sorted, op2);
     }
 
+    @Test
+    public void testBind_conversion() {
+        List<Integer> list0_int = List.of();
+        List<Integer> list1_int = List.of(0);
+        List<Integer> list2_int = List.of(2, 1);
+        List<Integer> list2_int_sorted = List.of(1, 2);
+        List<String> list0_string = List.of();
+        List<String> list1_string = List.of("0");
+        List<String> list2_string = List.of("2", "1");
+        List<String> list2_string_sorted = new ArrayList<>(Arrays.asList("1", "2"));
+        ObservableList<String> op2 = FXCollections.observableArrayList("2", "1");
+
+        Bindings.bindContent(op1, op2, Integer::parseInt);
+        System.gc(); // making sure we did not not overdo weak references
+        assertEquals(list2_int, op1);
+        assertEquals(list2_string, op2);
+
+        op2.setAll(list1_string);
+        assertEquals(list1_int, op1);
+        assertEquals(list1_string, op2);
+
+        op2.setAll(list0_string);
+        assertEquals(list0_int, op1);
+        assertEquals(list0_string, op2);
+
+        op2.setAll(list2_string);
+        assertEquals(list2_int, op1);
+        assertEquals(list2_string, op2);
+
+        FXCollections.sort(op2);
+        assertEquals(list2_int_sorted, op1);
+        assertEquals(list2_string_sorted, op2);
+    }
+
     @Test(expected = NullPointerException.class)
     public void testBind_Null_X() {
         Bindings.bindContent(null, op2);
@@ -121,6 +157,36 @@ public class ContentBindingListTest {
         op2.setAll(list1);
         assertEquals(list0, op1);
         assertEquals(list1, op2);
+    }
+
+    @Test
+    public void testUnbind_conversion() {
+        List<Integer> list0_int = List.of();
+        List<Integer> list2_int = List.of(2, 1);
+        List<String> list1_string = List.of("0");
+        List<String> list2_string = List.of("2", "1");
+        ObservableList<String> op2 = FXCollections.observableArrayList("2", "1");
+
+        // unbind non-existing binding => no-op
+        Bindings.unbindContent(op1, op2);
+
+        Bindings.bindContent(op1, op2, Integer::parseInt);
+        System.gc(); // making sure we did not not overdo weak references
+        assertEquals(list2_int, op1);
+        assertEquals(list2_string, op2);
+
+        Bindings.unbindContent(op1, op2);
+        System.gc();
+        assertEquals(list2_int, op1);
+        assertEquals(list2_string, op2);
+
+        op1.clear();
+        assertEquals(list0_int, op1);
+        assertEquals(list2_string, op2);
+
+        op2.setAll(list1_string);
+        assertEquals(list0_int, op1);
+        assertEquals(list1_string, op2);
     }
 
     @Test(expected = NullPointerException.class)
