@@ -1,6 +1,5 @@
 /*
  * Copyright (c) 2011, 2021, Oracle and/or its affiliates. All rights reserved.
- * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,7 +30,6 @@ import javafx.beans.Observable;
 import javafx.beans.WeakListener;
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
-import javafx.util.BidirectionalValueConverter;
 import javafx.util.StringConverter;
 
 import java.lang.ref.WeakReference;
@@ -86,15 +84,6 @@ public abstract class BidirectionalBinding implements InvalidationListener, Weak
         stringProperty.setValue(converter.toString(otherProperty.getValue()));
         stringProperty.addListener(binding);
         otherProperty.addListener(binding);
-        return binding;
-    }
-
-    public static <T, S> Object bind(Property<T> property1, Property<S> property2, BidirectionalValueConverter<S, T> converter) {
-        checkParameters(property1, property2);
-        Objects.requireNonNull(converter, "Converter cannot be null");
-        final var binding = new ValueConverterBidirectionalBinding<>(property1, property2, converter);
-        property1.addListener(binding);
-        property2.addListener(binding);
         return binding;
     }
 
@@ -172,7 +161,7 @@ public abstract class BidirectionalBinding implements InvalidationListener, Weak
 
     private final int cachedHashCode;
 
-    private BidirectionalBinding(Object property1, Object property2) {
+    BidirectionalBinding(Object property1, Object property2) {
         cachedHashCode = property1.hashCode() * property2.hashCode();
     }
 
@@ -856,84 +845,6 @@ public abstract class BidirectionalBinding implements InvalidationListener, Weak
         @Override
         protected T fromString(String value) throws ParseException {
             return converter.fromString(value);
-        }
-    }
-
-    private static class ValueConverterBidirectionalBinding<T, U> extends BidirectionalBinding {
-        private final WeakReference<Property<U>> propertyRef1;
-        private final WeakReference<Property<T>> propertyRef2;
-        private final BidirectionalValueConverter<T, U> converter;
-        private U oldValue1;
-        private T oldValue2;
-        private boolean updating;
-
-        public ValueConverterBidirectionalBinding(Property<U> property1, Property<T> property2, BidirectionalValueConverter<T, U> converter) {
-            super(property1, property2);
-            this.converter = converter;
-            oldValue2 = property2.getValue();
-            oldValue1 = converter.convert(oldValue2);
-            propertyRef1 = new WeakReference<>(property1);
-            propertyRef2 = new WeakReference<>(property2);
-            property1.setValue(oldValue1);
-        }
-
-        @Override
-        protected Object getProperty1() {
-            return propertyRef1.get();
-        }
-
-        @Override
-        protected Object getProperty2() {
-            return propertyRef2.get();
-        }
-
-        @Override
-        public void invalidated(Observable observable) {
-            if (!updating) {
-                final Property<U> property1 = this.propertyRef1.get();
-                final Property<T> property2 = this.propertyRef2.get();
-                if ((property1 == null) || (property2 == null)) {
-                    if (property1 != null) {
-                        property1.removeListener(this);
-                    }
-                    if (property2 != null) {
-                        property2.removeListener(this);
-                    }
-                } else {
-                    try {
-                        updating = true;
-                        if (property1 == observable) {
-                            U newValue = property1.getValue();
-                            property2.setValue(converter.convertBack(newValue));
-                            oldValue1 = newValue;
-                        } else {
-                            T newValue = property2.getValue();
-                            property1.setValue(converter.convert(newValue));
-                            oldValue2 = newValue;
-                        }
-                    } catch (RuntimeException e) {
-                        try {
-                            if (property1 == observable) {
-                                property1.setValue(oldValue1);
-                            } else {
-                                property2.setValue(oldValue2);
-                            }
-                        } catch (Exception e2) {
-                            e2.addSuppressed(e);
-                            unbind(property1, property2);
-                            throw new RuntimeException(
-                                "Bidirectional binding failed together with an attempt"
-                                        + " to restore the source property to the previous value."
-                                        + " Removing the bidirectional binding from properties " +
-                                        property1 + " and " + property2, e2);
-                        }
-                        throw new RuntimeException(
-                                "Bidirectional binding failed, setting to the previous value", e);
-                    } finally {
-                        updating = false;
-                    }
-                }
-            }
         }
     }
 }

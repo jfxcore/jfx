@@ -54,6 +54,8 @@ import javafx.util.StringConverter;
 import com.sun.javafx.binding.BidirectionalBinding;
 import com.sun.javafx.binding.BidirectionalContentBinding;
 import com.sun.javafx.binding.ContentBinding;
+import com.sun.javafx.binding.ConvertingBidirectionalBinding;
+import com.sun.javafx.binding.ConvertingBidirectionalContentBinding;
 import com.sun.javafx.binding.DoubleConstant;
 import com.sun.javafx.binding.FloatConstant;
 import com.sun.javafx.binding.IntegerConstant;
@@ -981,7 +983,7 @@ public final class Bindings {
      * @since JavaFX 2.1
      */
     public static <T> void bindBidirectional(Property<String> stringProperty, Property<T> otherProperty, StringConverter<T> converter) {
-        BidirectionalBinding.bind(stringProperty, otherProperty, converter);
+        ConvertingBidirectionalBinding.bind(stringProperty, otherProperty, converter);
     }
 
     /**
@@ -1021,7 +1023,7 @@ public final class Bindings {
      * @since JFXcore 17
      */
     public static <S, T> void bindBidirectional(Property<T> property1, Property<S> property2, BidirectionalValueConverter<S, T> converter) {
-        BidirectionalBinding.bind(property1, property2, converter);
+        ConvertingBidirectionalBinding.bind(property1, property2, converter);
     }
 
     /**
@@ -1177,7 +1179,7 @@ public final class Bindings {
      * @since JFXcore 17
      */
     public static <S, E> void bindContentBidirectional(ObservableList<E> list1, ObservableList<S> list2, BidirectionalValueConverter<S, E> converter) {
-        BidirectionalContentBinding.bind(list1, list2, converter);
+        ConvertingBidirectionalContentBinding.bind(list1, list2, converter);
     }
 
     /**
@@ -1218,7 +1220,7 @@ public final class Bindings {
      * @since JFXcore 17
      */
     public static <S, E> void bindContentBidirectional(ObservableSet<E> set1, ObservableSet<S> set2, BidirectionalValueConverter<S, E> converter) {
-        BidirectionalContentBinding.bind(set1, set2, converter);
+        ConvertingBidirectionalContentBinding.bind(set1, set2, converter);
     }
 
     /**
@@ -1257,7 +1259,7 @@ public final class Bindings {
      * @since JFXcore 17
      */
     public static <K, S, V> void bindContentBidirectional(ObservableMap<K, V> map1, ObservableMap<K, S> map2, BidirectionalValueConverter<S, V> converter) {
-        BidirectionalContentBinding.bind(map1, map2, converter);
+        ConvertingBidirectionalContentBinding.bind(map1, map2, converter);
     }
 
     /**
