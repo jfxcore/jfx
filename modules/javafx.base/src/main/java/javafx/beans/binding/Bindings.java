@@ -56,6 +56,7 @@ import com.sun.javafx.binding.BidirectionalContentBinding;
 import com.sun.javafx.binding.ContentBinding;
 import com.sun.javafx.binding.ConvertingBidirectionalBinding;
 import com.sun.javafx.binding.ConvertingBidirectionalContentBinding;
+import com.sun.javafx.binding.ConvertingContentBinding;
 import com.sun.javafx.binding.DoubleConstant;
 import com.sun.javafx.binding.FloatConstant;
 import com.sun.javafx.binding.IntegerConstant;
@@ -1375,7 +1376,7 @@ public final class Bindings {
      * @since JavaFX 2.1
      */
     public static <S, E> void bindContent(List<E> list1, ObservableList<? extends S> list2, ValueConverter<S, E> converter) {
-        ContentBinding.bind(list1, list2, converter);
+        ConvertingContentBinding.bind(list1, list2, converter);
     }
 
     /**
@@ -1403,7 +1404,7 @@ public final class Bindings {
      * @since JavaFX 2.1
      */
     public static <S, E> void bindContent(Set<E> set1, ObservableSet<? extends S> set2, ValueConverter<S, E> converter) {
-        ContentBinding.bind(set1, set2, converter);
+        ConvertingContentBinding.bind(set1, set2, converter);
     }
 
     /**
@@ -1433,7 +1434,7 @@ public final class Bindings {
      * @since JavaFX 2.1
      */
     public static <K, S, V> void bindContent(Map<K, V> map1, ObservableMap<? extends K, ? extends S> map2, ValueConverter<S, V> converter) {
-        ContentBinding.bind(map1, map2, converter);
+        ConvertingContentBinding.bind(map1, map2, converter);
     }
 
     /**
