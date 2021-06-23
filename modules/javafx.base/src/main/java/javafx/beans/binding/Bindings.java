@@ -990,7 +990,8 @@ public final class Bindings {
     /**
      * Generates a bidirectional binding (or "bind with inverse") between two
      * instances of {@link javafx.beans.property.Property} using the specified
-     * {@link javafx.util.BidirectionalValueConverter} for conversion.
+     * {@link javafx.util.BidirectionalValueConverter} to convert between the
+     * property values.
      * <p>
      * A bidirectional binding is a binding that works in both directions. If
      * two properties {@code a} and {@code b} are linked with a bidirectional
@@ -1016,7 +1017,7 @@ public final class Bindings {
      * @param property2
      *            the second {@code Property<T>}
      * @param converter
-     *            the {@code BidirectionalValueConverter} used to convert between the properties
+     *            the {@code BidirectionalValueConverter} used to convert between the property values
      * @throws NullPointerException
      *            if one of the properties or the {@code converter} is {@code null}
      * @throws IllegalArgumentException
@@ -1143,18 +1144,15 @@ public final class Bindings {
     }
 
     /**
-     * Generates a converting bidirectional binding (or "bind with inverse") between two
-     * instances of {@link javafx.collections.ObservableList}.
+     * Generates a bidirectional binding (or "bind with inverse") between two
+     * instances of {@link javafx.collections.ObservableList} that uses the specified
+     * {@link BidirectionalValueConverter} to convert between list values.
      * <p>
-     * A converting bidirectional binding is a binding that works in both directions. If
-     * two properties {@code a} and {@code b} are linked with a converting bidirectional
-     * binding and the content of {@code a} changes, the content of {@code b} is synchronized
-     * such that it contains the projections of all elements of {@code a} that were obtained
-     * by converting each element with the specified {@code BidirectionalValueConverter}.
-     * And vice versa, if the content of {@code b} changes, the content of {@code a} is
-     * synchronized likewise.
+     * Only the content of the two lists is synchronized by converting each list element
+     * with the specified {@code BidirectionalValueConverter}, which means that
+     * the list instances themselves are different.
      * <p>
-     * A converting bidirectional content-binding can be removed with
+     * A bidirectional content-binding can be removed with
      * {@link #unbindContentBidirectional(Object, Object)}.
      * <p>
      * Note: this implementation of a bidirectional binding behaves differently
@@ -1184,18 +1182,15 @@ public final class Bindings {
     }
 
     /**
-     * Generates a converting bidirectional binding (or "bind with inverse") between two
-     * instances of {@link javafx.collections.ObservableSet}.
+     * Generates a bidirectional binding (or "bind with inverse") between two
+     * instances of {@link javafx.collections.ObservableSet} that uses the specified
+     * {@link BidirectionalValueConverter} to convert between set values.
      * <p>
-     * A converting bidirectional binding is a binding that works in both directions. If
-     * two properties {@code a} and {@code b} are linked with a converting bidirectional
-     * binding and the content of {@code a} changes, the content of {@code b} is synchronized
-     * such that it contains the projections of all elements of {@code a} that were obtained
-     * by converting each element with the specified {@code BidirectionalValueConverter}.
-     * And vice versa, if the content of {@code b} changes, the content of {@code a} is
-     * synchronized likewise.
+     * Only the content of the two sets is synchronized by converting each set element
+     * with the specified {@code BidirectionalValueConverter}, which means that
+     * the set instances themselves are different.
      * <p>
-     * A converting bidirectional content-binding can be removed with
+     * A bidirectional content-binding can be removed with
      * {@link #unbindContentBidirectional(Object, Object)}.
      * <p>
      * Note: this implementation of a bidirectional binding behaves differently
@@ -1225,19 +1220,15 @@ public final class Bindings {
     }
 
     /**
-     * Generates a converting bidirectional binding (or "bind with inverse") between two
-     * instances of {@link javafx.collections.ObservableMap}.
+     * Generates a bidirectional binding (or "bind with inverse") between two
+     * instances of {@link javafx.collections.ObservableMap} that uses the specified
+     * {@link BidirectionalValueConverter} to convert between map values.
      * <p>
-     * A converting bidirectional binding is a binding that works in both directions. If
-     * two properties {@code a} and {@code b} are linked with a converting bidirectional
-     * binding and the content of {@code a} changes, the content of {@code b} is synchronized
-     * such that it associates any key in {@code a} with the projection that is obtained
-     * by converting the corresponding value with the specified {@code BidirectionalValueConverter}.
-     * And vice versa, if the content of {@code b} changes, the content of {@code a} is
-     * synchronized likewise.
+     * Only the content of the two maps is synchronized by converting each map element
+     * with the specified {@code BidirectionalValueConverter}, which means that
+     * the map instances themselves are different.
      * <p>
-     * <p>
-     * A converting bidirectional content-binding can be removed with
+     * A bidirectional content-binding can be removed with
      * {@link #unbindContentBidirectional(Object, Object)}.
      * <p>
      * Note: this implementation of a bidirectional binding behaves differently
