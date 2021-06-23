@@ -984,7 +984,7 @@ public final class Bindings {
      * @since JavaFX 2.1
      */
     public static <T> void bindBidirectional(Property<String> stringProperty, Property<T> otherProperty, StringConverter<T> converter) {
-        ConvertingBidirectionalBinding.bind(stringProperty, otherProperty, converter);
+        BidirectionalBinding.bind(stringProperty, otherProperty, converter);
     }
 
     /**
