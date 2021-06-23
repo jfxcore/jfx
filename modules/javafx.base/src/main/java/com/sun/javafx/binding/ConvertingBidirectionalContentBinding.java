@@ -25,13 +25,12 @@ import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
 import javafx.util.BidirectionalValueConverter;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public abstract class ConvertingBidirectionalContentBinding {
+public class ConvertingBidirectionalContentBinding {
 
     private static <S, E> void checkParameters(Object property1, Object property2, BidirectionalValueConverter<S, E> converter) {
         if (property1 == null || property2 == null || converter == null) {

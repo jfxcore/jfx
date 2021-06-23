@@ -24,9 +24,7 @@ package com.sun.javafx.binding;
 import javafx.beans.Observable;
 import javafx.beans.property.Property;
 import javafx.util.BidirectionalValueConverter;
-
 import java.lang.ref.WeakReference;
-import java.util.Objects;
 
 public class ConvertingBidirectionalBinding<T, U> extends BidirectionalBinding {
 
