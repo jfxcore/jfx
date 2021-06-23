@@ -73,7 +73,7 @@ public interface Property<T> extends ReadOnlyProperty<T>, WritableValue<T> {
      * @since JFXcore 17
      */
     default <S> void bind(ObservableValue<? extends S> observable, ValueConverter<S, T> converter) {
-        throw new UnsupportedOperationException("Conversion binding is not supported");
+        throw new UnsupportedOperationException("Conversion binding is not implemented");
     }
 
     /**
@@ -140,7 +140,7 @@ public interface Property<T> extends ReadOnlyProperty<T>, WritableValue<T> {
      * @since JFXcore 17
      */
     default <S> void bindBidirectional(Property<S> other, BidirectionalValueConverter<S, T> converter) {
-        throw new UnsupportedOperationException("Bidirectional conversion binding is not supported");
+        throw new UnsupportedOperationException("Conversion binding is not implemented");
     }
 
     /**
