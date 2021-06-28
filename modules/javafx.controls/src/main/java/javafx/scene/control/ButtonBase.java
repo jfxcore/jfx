@@ -34,6 +34,7 @@ import javafx.scene.AccessibleAction;
 import javafx.scene.Node;
 import javafx.beans.property.ReadOnlyBooleanProperty;
 import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.scene.command.CommandSource;
 
 /**
  * Base class for button-like UI Controls, including Hyperlinks, Buttons,
@@ -47,7 +48,7 @@ import javafx.beans.property.ReadOnlyBooleanWrapper;
  * @since JavaFX 2.0
  */
 
-public abstract class ButtonBase extends Labeled {
+public abstract class ButtonBase extends Labeled implements CommandSource {
 
     /***************************************************************************
      *                                                                         *

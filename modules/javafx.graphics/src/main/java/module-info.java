@@ -55,6 +55,7 @@ module javafx.graphics {
     exports javafx.print;
     exports javafx.scene;
     exports javafx.scene.canvas;
+    exports javafx.scene.command;
     exports javafx.scene.effect;
     exports javafx.scene.image;
     exports javafx.scene.input;
@@ -104,6 +105,8 @@ module javafx.graphics {
         javafx.media,
         javafx.swing,
         javafx.web;
+    exports com.sun.javafx.scene.command to
+        javafx.controls;
     exports com.sun.javafx.scene.input to
         javafx.controls,
         javafx.swing,

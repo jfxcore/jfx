@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +31,6 @@ import javafx.beans.DefaultProperty;
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
 import javafx.beans.binding.IntegerBinding;
-import javafx.beans.binding.StringBinding;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.ObjectPropertyBase;
@@ -58,6 +58,8 @@ import javafx.css.StyleableObjectProperty;
 import javafx.css.StyleableProperty;
 import javafx.scene.AccessibleAction;
 import javafx.scene.AccessibleAttribute;
+import javafx.scene.command.CommandSource;
+import javafx.scene.command.RoutedCommandBinding;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.text.Font;
@@ -171,6 +173,21 @@ public abstract class TextInputControl extends Control {
 
         // Specify the default style class
         getStyleClass().add("text-input");
+
+        var textNotEmpty = selectedTextProperty().isNotEmpty();
+        var undoBinding = new RoutedCommandBinding(TextInputCommands.UNDO, this::undo, undoableProperty());
+        var redoBinding = new RoutedCommandBinding(TextInputCommands.REDO, this::redo, redoableProperty());
+        var cutBinding = new RoutedCommandBinding(TextInputCommands.CUT, this::cut, textNotEmpty);
+        var copyBinding = new RoutedCommandBinding(TextInputCommands.COPY, this::copy, textNotEmpty);
+        var pasteBinding = new RoutedCommandBinding(TextInputCommands.PASTE, this::paste, new ObservableValue<>() {
+            @Override public void addListener(ChangeListener<? super Boolean> listener) {}
+            @Override public void removeListener(ChangeListener<? super Boolean> listener) {}
+            @Override public void addListener(InvalidationListener listener) {}
+            @Override public void removeListener(InvalidationListener listener) {}
+            @Override public Boolean getValue() { return Clipboard.getSystemClipboard().hasString(); }
+        });
+
+        CommandSource.getBindings(this).addAll(pasteBinding, cutBinding, copyBinding, undoBinding, redoBinding);
     }
 
     private void updateSelectedText() {

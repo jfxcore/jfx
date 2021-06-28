@@ -430,12 +430,12 @@ public class Menu extends MenuItem {
     }
 
     /** {@inheritDoc} */
-    @Override public <E extends Event> void addEventHandler(EventType<E> eventType, EventHandler<E> eventHandler) {
+    @Override public <E extends Event> void addEventHandler(EventType<E> eventType, EventHandler<? super E> eventHandler) {
         eventHandlerManager.addEventHandler(eventType, eventHandler);
     }
 
     /** {@inheritDoc} */
-    @Override public <E extends Event> void removeEventHandler(EventType<E> eventType, EventHandler<E> eventHandler) {
+    @Override public <E extends Event> void removeEventHandler(EventType<E> eventType, EventHandler<? super E> eventHandler) {
         eventHandlerManager.removeEventHandler(eventType, eventHandler);
     }
 

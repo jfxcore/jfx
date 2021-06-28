@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +27,7 @@
 package javafx.scene.control;
 
 import com.sun.javafx.beans.IDProperty;
+import com.sun.javafx.scene.command.GetWindowHelper;
 import javafx.collections.ObservableSet;
 import javafx.css.PseudoClass;
 import javafx.css.Styleable;
@@ -46,6 +48,8 @@ import javafx.event.EventHandler;
 import javafx.event.EventTarget;
 import javafx.event.EventType;
 import javafx.scene.Node;
+import javafx.scene.Scene;
+import javafx.scene.command.CommandSource;
 import javafx.scene.input.KeyCombination;
 
 import com.sun.javafx.event.EventHandlerManager;
@@ -94,7 +98,15 @@ MenuBar menuBar = new MenuBar(menu);</code></pre>
  * @since JavaFX 2.0
  */
 @IDProperty("id")
-public class MenuItem implements EventTarget, Styleable {
+public class MenuItem implements EventTarget, Styleable, CommandSource {
+
+    static {
+        GetWindowHelper.register(MenuItem.class, menuItem -> {
+            ContextMenu contextMenu = menuItem.getParentPopup();
+            Scene scene = contextMenu != null ? contextMenu.getScene() : null;
+            return scene != null ? scene.getWindow() : null;
+        });
+    }
 
     /***************************************************************************
      *                                                                         *
@@ -469,7 +481,7 @@ public class MenuItem implements EventTarget, Styleable {
      * @param eventHandler the handler to register
      * @throws NullPointerException if the event type or handler is null
      */
-    public <E extends Event> void addEventHandler(EventType<E> eventType, EventHandler<E> eventHandler) {
+    public <E extends Event> void addEventHandler(EventType<E> eventType, EventHandler<? super E> eventHandler) {
         eventHandlerManager.addEventHandler(eventType, eventHandler);
     }
 
@@ -484,7 +496,7 @@ public class MenuItem implements EventTarget, Styleable {
      * @param eventHandler the handler to unregister
      * @throws NullPointerException if the event type or handler is null
      */
-    public <E extends Event> void removeEventHandler(EventType<E> eventType, EventHandler<E> eventHandler) {
+    public <E extends Event> void removeEventHandler(EventType<E> eventType, EventHandler<? super E> eventHandler) {
         eventHandlerManager.removeEventHandler(eventType, eventHandler);
     }
 
