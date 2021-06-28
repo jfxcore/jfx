@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +34,7 @@ import com.sun.javafx.binding.Logging;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableDoubleValue;
+import javafx.util.BidirectionalValueConverter;
 
 /**
  * This class defines a {@link Property} wrapping a {@code double} value.
@@ -85,6 +87,14 @@ public abstract class DoubleProperty extends ReadOnlyDoubleProperty implements
     @Override
     public void bindBidirectional(Property<Number> other) {
         Bindings.bindBidirectional(this, other);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <S> void bindBidirectional(Property<S> other, BidirectionalValueConverter<S, Number> converter) {
+        Bindings.bindBidirectional(this, other, converter);
     }
 
     /**

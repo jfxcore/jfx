@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2014, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +28,8 @@ package javafx.beans.property;
 
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableValue;
+import javafx.util.BidirectionalValueConverter;
+import javafx.util.ValueConverter;
 
 /**
  * Generic interface that defines the methods common to all (writable)
@@ -51,6 +54,27 @@ public interface Property<T> extends ReadOnlyProperty<T>, WritableValue<T> {
      *             if {@code observable} is {@code null}
      */
     void bind(ObservableValue<? extends T> observable);
+
+    /**
+     * Creates a unidirectional conversion binding for this {@code Property}. If the source property
+     * changes, the target property will be set to the value that is obtained by converting the
+     * changed value with the specified {@link ValueConverter}.
+     * <p>
+     * Note that JavaFX has all the bind calls implemented through weak listeners. This means the bound property
+     * can be garbage collected and stopped from being updated.
+     *
+     * @param <S> The type of the source property.
+     * @param observable
+     *            The source property.
+     * @param converter
+     *            The converter that can convert objects of type {@code S} to objects of type {@code T}.
+     * @throws NullPointerException
+     *            if {@code observable} is {@code null}
+     * @since JFXcore 17
+     */
+    default <S> void bind(ObservableValue<? extends S> observable, ValueConverter<S, T> converter) {
+        throw new UnsupportedOperationException("Conversion binding is not implemented");
+    }
 
     /**
      * Remove the unidirectional binding for this {@code Property}.
@@ -89,6 +113,35 @@ public interface Property<T> extends ReadOnlyProperty<T>, WritableValue<T> {
      *             if {@code other} is {@code this}
      */
     void bindBidirectional(Property<T> other);
+
+    /**
+     * Creates a bidirectional conversion binding between two properties. If any of the properties
+     * changes, the other property will be set to the value that is obtained by converting the
+     * changed value with the specified {@link BidirectionalValueConverter}.
+     * <p>
+     * Bidirectional bindings exists independently of unidirectional bindings. So it is possible to
+     * add unidirectional binding to a property with bidirectional binding and vice-versa. However, this practice is
+     * discouraged.
+     * <p>
+     * It is possible to have multiple bidirectional bindings of one Property.
+     * <p>
+     * JavaFX bidirectional bindings use weak listeners. This means a bidirectional binding does not prevent
+     * properties from being garbage collected.
+     *
+     * @param <S> the type of the source property
+     * @param other
+     *            the source {@code Property}
+     * @param converter
+     *            the converter that can convert between objects of type {@code S} and {@code T}
+     * @throws NullPointerException
+     *             if {@code other} is {@code null}
+     * @throws IllegalArgumentException
+     *             if {@code other} is {@code this}
+     * @since JFXcore 17
+     */
+    default <S> void bindBidirectional(Property<S> other, BidirectionalValueConverter<S, T> converter) {
+        throw new UnsupportedOperationException("Conversion binding is not implemented");
+    }
 
     /**
      * Remove a bidirectional binding between this {@code Property} and another

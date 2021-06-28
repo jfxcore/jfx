@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -346,6 +347,70 @@ public class BooleanPropertyBaseTest {
         assertEquals(false, property.get());
         property.check(1);
         changeListener.check(property, true, false, 1);
+    }
+
+    @Test
+    public void testLazyBind_conversion() {
+        attachInvalidationListener();
+        final ObservableObjectValueStub<Integer> v = new ObservableObjectValueStub<>(1);
+
+        property.bind(v, i -> i > 0);
+        assertTrue(property.get());
+        assertTrue(property.isBound());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding once
+        v.set(0);
+        assertFalse(property.get());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding twice without reading
+        v.set(1);
+        v.set(0);
+        assertFalse(property.get());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding twice to same value
+        v.set(1);
+        v.set(1);
+        assertTrue(property.get());
+        property.check(1);
+        invalidationListener.check(property, 1);
+    }
+
+    @Test
+    public void testEagerBind_conversion() {
+        attachChangeListener();
+        final ObservableObjectValueStub<Integer> v = new ObservableObjectValueStub<>(1);
+
+        property.bind(v, i -> i > 0);
+        assertTrue(property.get());
+        assertTrue(property.isBound());
+        property.check(1);
+        changeListener.check(property, false, true, 1);
+
+        // change binding once
+        v.set(0);
+        assertFalse(property.get());
+        property.check(1);
+        changeListener.check(property, true, false, 1);
+
+        // change binding twice without reading
+        v.set(1);
+        v.set(0);
+        assertFalse(property.get());
+        property.check(2);
+        changeListener.check(property, true, false, 2);
+
+        // change binding twice to same value
+        v.set(1);
+        v.set(1);
+        assertTrue(property.get());
+        property.check(2);
+        changeListener.check(property, false, true, 1);
     }
 
     @Test(expected=NullPointerException.class)

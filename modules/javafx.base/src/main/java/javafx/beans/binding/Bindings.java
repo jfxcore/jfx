@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,10 +49,14 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableMap;
 import javafx.collections.ObservableSet;
+import javafx.util.BidirectionalValueConverter;
 import javafx.util.StringConverter;
 import com.sun.javafx.binding.BidirectionalBinding;
 import com.sun.javafx.binding.BidirectionalContentBinding;
 import com.sun.javafx.binding.ContentBinding;
+import com.sun.javafx.binding.ConvertingBidirectionalBinding;
+import com.sun.javafx.binding.ConvertingBidirectionalContentBinding;
+import com.sun.javafx.binding.ConvertingContentBinding;
 import com.sun.javafx.binding.DoubleConstant;
 import com.sun.javafx.binding.FloatConstant;
 import com.sun.javafx.binding.IntegerConstant;
@@ -65,6 +70,7 @@ import com.sun.javafx.collections.ImmutableObservableList;
 import javafx.collections.ObservableArray;
 import javafx.collections.ObservableFloatArray;
 import javafx.collections.ObservableIntegerArray;
+import javafx.util.ValueConverter;
 
 /**
  * Bindings is a helper class with a lot of utility functions to create simple
@@ -983,6 +989,47 @@ public final class Bindings {
 
     /**
      * Generates a bidirectional binding (or "bind with inverse") between two
+     * instances of {@link javafx.beans.property.Property} using the specified
+     * {@link javafx.util.BidirectionalValueConverter} to convert between the
+     * property values.
+     * <p>
+     * A bidirectional binding is a binding that works in both directions. If
+     * two properties {@code a} and {@code b} are linked with a bidirectional
+     * binding and the value of {@code a} changes, {@code b} is set to the value
+     * that is obtained by applying {@link BidirectionalValueConverter#convert}.
+     * And vice versa, if {@code b} changes, {@code a} is set to the value that
+     * is obtained by applying {@link BidirectionalValueConverter#convertBack}.
+     * <p>
+     * A bidirectional binding can be removed with
+     * {@link #unbindBidirectional(Object, Object)}.
+     * <p>
+     * Note: this implementation of a bidirectional binding behaves differently
+     * from all other bindings here in two important aspects. A property that is
+     * linked to another property with a bidirectional binding can still be set
+     * (usually bindings would throw an exception). Secondly bidirectional
+     * bindings are calculated eagerly, i.e. a bound property is updated
+     * immediately.
+     *
+     * @param <T> the type of the first property
+     * @param <S> the type of the second property
+     * @param property1
+     *            the first {@code Property<T>}
+     * @param property2
+     *            the second {@code Property<T>}
+     * @param converter
+     *            the {@code BidirectionalValueConverter} used to convert between the property values
+     * @throws NullPointerException
+     *            if one of the properties or the {@code converter} is {@code null}
+     * @throws IllegalArgumentException
+     *            if both properties are equal
+     * @since JFXcore 17
+     */
+    public static <S, T> void bindBidirectional(Property<T> property1, Property<S> property2, BidirectionalValueConverter<S, T> converter) {
+        ConvertingBidirectionalBinding.bind(property1, property2, converter);
+    }
+
+    /**
+     * Generates a bidirectional binding (or "bind with inverse") between two
      * instances of {@link javafx.collections.ObservableList}.
      * <p>
      * A bidirectional binding is a binding that works in both directions. If
@@ -1097,6 +1144,117 @@ public final class Bindings {
     }
 
     /**
+     * Generates a bidirectional binding (or "bind with inverse") between two
+     * instances of {@link javafx.collections.ObservableList} that uses the specified
+     * {@link BidirectionalValueConverter} to convert between list values.
+     * <p>
+     * Only the content of the two lists is synchronized by converting each list element
+     * with the specified {@code BidirectionalValueConverter}, which means that
+     * the list instances themselves are different.
+     * <p>
+     * A bidirectional content-binding can be removed with
+     * {@link #unbindContentBidirectional(Object, Object)}.
+     * <p>
+     * Note: this implementation of a bidirectional binding behaves differently
+     * from all other bindings here in two important aspects. A property that is
+     * linked to another property with a bidirectional binding can still be set
+     * (usually bindings would throw an exception). Secondly bidirectional
+     * bindings are calculated eagerly, i.e. a bound property is updated
+     * immediately.
+     *
+     * @param <E> the type of the list elements
+     * @param <S> the type of the elements in the source list
+     * @param list1
+     *            the first {@code ObservableList<E>}
+     * @param list2
+     *            the second {@code ObservableList<E>}
+     * @param converter
+     *            the converter that can convert objects of type {@code S} to objects of type {@code E},
+     *            and objects of type {@code E} back to objects of type {@code S}
+     * @throws NullPointerException
+     *            if any of the arguments are {@code null}
+     * @throws IllegalArgumentException
+     *            if {@code list1} == {@code list2}
+     * @since JFXcore 17
+     */
+    public static <S, E> void bindContentBidirectional(ObservableList<E> list1, ObservableList<S> list2, BidirectionalValueConverter<S, E> converter) {
+        ConvertingBidirectionalContentBinding.bind(list1, list2, converter);
+    }
+
+    /**
+     * Generates a bidirectional binding (or "bind with inverse") between two
+     * instances of {@link javafx.collections.ObservableSet} that uses the specified
+     * {@link BidirectionalValueConverter} to convert between set values.
+     * <p>
+     * Only the content of the two sets is synchronized by converting each set element
+     * with the specified {@code BidirectionalValueConverter}, which means that
+     * the set instances themselves are different.
+     * <p>
+     * A bidirectional content-binding can be removed with
+     * {@link #unbindContentBidirectional(Object, Object)}.
+     * <p>
+     * Note: this implementation of a bidirectional binding behaves differently
+     * from all other bindings here in two important aspects. A property that is
+     * linked to another property with a bidirectional binding can still be set
+     * (usually bindings would throw an exception). Secondly bidirectional
+     * bindings are calculated eagerly, i.e. a bound property is updated
+     * immediately.
+     *
+     * @param <E> the type of the set elements
+     * @param <S> the type of the source set elements
+     * @param set1
+     *            the first {@code ObservableSet<E>}
+     * @param set2
+     *            the second {@code ObservableSet<E>}
+     * @param converter
+     *            the converter that can convert objects of type {@code S} to objects of type {@code E},
+     *            and objects of type {@code E} back to objects of type {@code S}
+     * @throws NullPointerException
+     *            if any of the arguments are {@code null}
+     * @throws IllegalArgumentException
+     *            if {@code set1} == {@code set2}
+     * @since JFXcore 17
+     */
+    public static <S, E> void bindContentBidirectional(ObservableSet<E> set1, ObservableSet<S> set2, BidirectionalValueConverter<S, E> converter) {
+        ConvertingBidirectionalContentBinding.bind(set1, set2, converter);
+    }
+
+    /**
+     * Generates a bidirectional binding (or "bind with inverse") between two
+     * instances of {@link javafx.collections.ObservableMap} that uses the specified
+     * {@link BidirectionalValueConverter} to convert between map values.
+     * <p>
+     * Only the content of the two maps is synchronized by converting each map element
+     * with the specified {@code BidirectionalValueConverter}, which means that
+     * the map instances themselves are different.
+     * <p>
+     * A bidirectional content-binding can be removed with
+     * {@link #unbindContentBidirectional(Object, Object)}.
+     * <p>
+     * Note: this implementation of a bidirectional binding behaves differently
+     * from all other bindings here in two important aspects. A property that is
+     * linked to another property with a bidirectional binding can still be set
+     * (usually bindings would throw an exception). Secondly bidirectional
+     * bindings are calculated eagerly, i.e. a bound property is updated
+     * immediately.
+     *
+     * @param <K> the type of the key elements
+     * @param <V> the type of the value elements
+     * @param <S> the type of the source value elements
+     * @param map1
+     *            the first {@code ObservableMap<K, V>}
+     * @param map2
+     *            the second {@code ObservableMap<K, V>}
+     * @param converter
+     *            the converter that can convert objects of type {@code S} to objects of type {@code V},
+     *            and objects of type {@code V} back to objects of type {@code S}
+     * @since JFXcore 17
+     */
+    public static <K, S, V> void bindContentBidirectional(ObservableMap<K, V> map1, ObservableMap<K, S> map2, BidirectionalValueConverter<S, V> converter) {
+        ConvertingBidirectionalContentBinding.bind(map1, map2, converter);
+    }
+
+    /**
      * Remove a bidirectional content binding.
      *
      * @param obj1
@@ -1186,6 +1344,88 @@ public final class Bindings {
      */
     public static <K, V> void bindContent(Map<K, V> map1, ObservableMap<? extends K, ? extends V> map2) {
         ContentBinding.bind(map1, map2);
+    }
+
+    /**
+     * Generates a converting content binding between an {@link javafx.collections.ObservableList} and a {@link java.util.List}.
+     * <p>
+     * A converting content binding ensures that the {@code List} contains all elements of the {@code ObservableList}
+     * after converting each element with the specified {@code ValueConverter}.
+     * If the content of the {@code ObservableList} changes, the {@code List} will be updated automatically.
+     * <p>
+     * Once a {@code List} is bound to an {@code ObservableList}, the {@code List} must not be changed directly
+     * anymore. Doing so would lead to unexpected results.
+     * <p>
+     * A content-binding can be removed with {@link #unbindContent(Object, Object)}.
+     *
+     * @param <E>
+     *            the type of the {@code List} elements
+     * @param list1
+     *            the {@code List}
+     * @param list2
+     *            the {@code ObservableList}
+     * @since JavaFX 2.1
+     */
+    public static <S, E> void bindContent(List<E> list1, ObservableList<? extends S> list2, ValueConverter<S, E> converter) {
+        ConvertingContentBinding.bind(list1, list2, converter);
+    }
+
+    /**
+     * Generates a converting content binding between an {@link javafx.collections.ObservableSet} and a {@link java.util.Set}.
+     * <p>
+     * A converting content binding ensures that the {@code Set} contains all elements of the {@code ObservableSet}
+     * after converting each element with the specified {@code ValueConverter}.
+     * If the content of the {@code ObservableSet} changes, the {@code Set} will be updated automatically.
+     * <p>
+     * Once a {@code Set} is bound to an {@code ObservableSet}, the {@code Set} must not be changed directly
+     * anymore. Doing so would lead to unexpected results.
+     * <p>
+     * A content-binding can be removed with {@link #unbindContent(Object, Object)}.
+     *
+     * @param <E>
+     *            the type of the {@code Set} elements
+     * @param set1
+     *            the {@code Set}
+     * @param set2
+     *            the {@code ObservableSet}
+     * @throws NullPointerException
+     *            if one of the sets is {@code null}
+     * @throws IllegalArgumentException
+     *            if {@code set1} == {@code set2}
+     * @since JavaFX 2.1
+     */
+    public static <S, E> void bindContent(Set<E> set1, ObservableSet<? extends S> set2, ValueConverter<S, E> converter) {
+        ConvertingContentBinding.bind(set1, set2, converter);
+    }
+
+    /**
+     * Generates a converting content binding between an {@link javafx.collections.ObservableMap} and a {@link java.util.Map}.
+     * <p>
+     * A converting content binding ensures that the {@code Map} contains all elements of the {@code ObservableMap}
+     * after converting each element with the specified {@code ValueConverter}.
+     * If the content of the {@code ObservableMap} changes, the {@code Map} will be updated automatically.
+     * <p>
+     * Once a {@code Map} is bound to an {@code ObservableMap}, the {@code Map} must not be changed directly
+     * anymore. Doing so would lead to unexpected results.
+     * <p>
+     * A content-binding can be removed with {@link #unbindContent(Object, Object)}.
+     *
+     * @param <K>
+     *            the type of the key elements of the {@code Map}
+     * @param <V>
+     *            the type of the value elements of the {@code Map}
+     * @param map1
+     *            the {@code Map}
+     * @param map2
+     *            the {@code ObservableMap}
+     * @throws NullPointerException
+     *            if one of the maps is {@code null}
+     * @throws IllegalArgumentException
+     *            if {@code map1} == {@code map2}
+     * @since JavaFX 2.1
+     */
+    public static <K, S, V> void bindContent(Map<K, V> map1, ObservableMap<? extends K, ? extends S> map2, ValueConverter<S, V> converter) {
+        ConvertingContentBinding.bind(map1, map2, converter);
     }
 
     /**

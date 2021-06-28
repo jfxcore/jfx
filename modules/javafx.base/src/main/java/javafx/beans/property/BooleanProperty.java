@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +32,8 @@ import com.sun.javafx.binding.BidirectionalBinding;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableBooleanValue;
+import javafx.util.BidirectionalValueConverter;
+import javafx.util.ValueConverter;
 import com.sun.javafx.binding.Logging;
 
 /**
@@ -86,6 +89,14 @@ public abstract class BooleanProperty extends ReadOnlyBooleanProperty implements
     @Override
     public void bindBidirectional(Property<Boolean> other) {
         Bindings.bindBidirectional(this, other);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <S> void bindBidirectional(Property<S> other, BidirectionalValueConverter<S, Boolean> converter) {
+        Bindings.bindBidirectional(this, other, converter);
     }
 
     /**

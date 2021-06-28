@@ -97,12 +97,12 @@ public class BidirectionalContentBinding {
         }
     }
 
-    private static class ListContentBinding<E> implements ListChangeListener<E>, WeakListener {
+    static class ListContentBinding<E> implements ListChangeListener<E>, WeakListener {
 
-        private final WeakReference<ObservableList<E>> propertyRef1;
-        private final WeakReference<ObservableList<E>> propertyRef2;
+        final WeakReference<ObservableList<E>> propertyRef1;
+        final WeakReference<ObservableList<E>> propertyRef2;
 
-        private boolean updating = false;
+        boolean updating = false;
 
 
         public ListContentBinding(ObservableList<E> list1, ObservableList<E> list2) {
@@ -191,12 +191,12 @@ public class BidirectionalContentBinding {
         }
     }
 
-    private static class SetContentBinding<E> implements SetChangeListener<E>, WeakListener {
+    static class SetContentBinding<E> implements SetChangeListener<E>, WeakListener {
 
-        private final WeakReference<ObservableSet<E>> propertyRef1;
-        private final WeakReference<ObservableSet<E>> propertyRef2;
+        final WeakReference<ObservableSet<E>> propertyRef1;
+        final WeakReference<ObservableSet<E>> propertyRef2;
 
-        private boolean updating = false;
+        boolean updating = false;
 
 
         public SetContentBinding(ObservableSet<E> list1, ObservableSet<E> list2) {
@@ -277,12 +277,12 @@ public class BidirectionalContentBinding {
         }
     }
 
-    private static class MapContentBinding<K, V> implements MapChangeListener<K, V>, WeakListener {
+    static class MapContentBinding<K, V> implements MapChangeListener<K, V>, WeakListener {
 
-        private final WeakReference<ObservableMap<K, V>> propertyRef1;
-        private final WeakReference<ObservableMap<K, V>> propertyRef2;
+        final WeakReference<ObservableMap<K, V>> propertyRef1;
+        final WeakReference<ObservableMap<K, V>> propertyRef2;
 
-        private boolean updating = false;
+        boolean updating = false;
 
 
         public MapContentBinding(ObservableMap<K, V> list1, ObservableMap<K, V> list2) {

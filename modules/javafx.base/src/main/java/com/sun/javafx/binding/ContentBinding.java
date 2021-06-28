@@ -91,9 +91,9 @@ public class ContentBinding {
         }
     }
 
-    private static class ListContentBinding<E> implements ListChangeListener<E>, WeakListener {
+    static class ListContentBinding<E> implements ListChangeListener<E>, WeakListener {
 
-        private final WeakReference<List<E>> listRef;
+        final WeakReference<List<E>> listRef;
 
         public ListContentBinding(List<E> list) {
             this.listRef = new WeakReference<List<E>>(list);
@@ -152,9 +152,9 @@ public class ContentBinding {
         }
     }
 
-    private static class SetContentBinding<E> implements SetChangeListener<E>, WeakListener {
+    static class SetContentBinding<E> implements SetChangeListener<E>, WeakListener {
 
-        private final WeakReference<Set<E>> setRef;
+        final WeakReference<Set<E>> setRef;
 
         public SetContentBinding(Set<E> set) {
             this.setRef = new WeakReference<Set<E>>(set);
@@ -205,9 +205,9 @@ public class ContentBinding {
         }
     }
 
-    private static class MapContentBinding<K, V> implements MapChangeListener<K, V>, WeakListener {
+    static class MapContentBinding<K, V> implements MapChangeListener<K, V>, WeakListener {
 
-        private final WeakReference<Map<K, V>> mapRef;
+        final WeakReference<Map<K, V>> mapRef;
 
         public MapContentBinding(Map<K, V> map) {
             this.mapRef = new WeakReference<Map<K, V>>(map);

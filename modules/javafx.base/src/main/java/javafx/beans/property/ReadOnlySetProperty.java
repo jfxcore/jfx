@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +33,8 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.SetExpression;
 import javafx.collections.ObservableList;
 import javafx.collections.ObservableSet;
+import javafx.util.BidirectionalValueConverter;
+import javafx.util.ValueConverter;
 
 /**
  * Superclass for all readonly properties wrapping an {@link javafx.collections.ObservableSet}.
@@ -68,6 +71,28 @@ public abstract class ReadOnlySetProperty<E> extends SetExpression<E> implements
     }
 
     /**
+     * Creates a bidirectional content binding of the {@link javafx.collections.ObservableSet}, that is
+     * wrapped in this {@code ReadOnlySetProperty}, and another {@code ObservableSet}.
+     * <p>
+     * A converting bidirectional binding is a binding that works in both directions. If
+     * two properties {@code a} and {@code b} are linked with a converting bidirectional
+     * binding and the content of {@code a} changes, the content of {@code b} is synchronized
+     * such that it contains the projections of all elements of {@code a} that were obtained
+     * by converting each element with the specified {@code BidirectionalValueConverter}.
+     * And vice versa, if the content of {@code b} changes, the content of {@code a} is
+     * synchronized likewise.
+     *
+     * @param <S> the type of the elements contained in the source set
+     * @param set the {@code ObservableSet} this property should be bound to
+     * @param converter the converter that can convert objects of type {@code S} and {@code E}
+     * @throws NullPointerException if {@code set} or {@code converter} is {@code null}
+     * @throws IllegalArgumentException if {@code set} is the same set that this {@code ReadOnlySetProperty} points to
+     */
+    public <S> void bindContentBidirectional(ObservableSet<S> set, BidirectionalValueConverter<S, E> converter) {
+        Bindings.bindContentBidirectional(this, set, converter);
+    }
+
+    /**
      * Deletes a bidirectional content binding between the {@link javafx.collections.ObservableSet}, that is
      * wrapped in this {@code ReadOnlySetProperty}, and another {@code Object}.
      *
@@ -93,6 +118,25 @@ public abstract class ReadOnlySetProperty<E> extends SetExpression<E> implements
      */
     public void bindContent(ObservableSet<E> set) {
         Bindings.bindContent(this, set);
+    }
+
+    /**
+     * Creates a converting content binding between the {@link javafx.collections.ObservableSet}, that is
+     * wrapped in this {@code ReadOnlySetProperty}, and another {@code ObservableSet}.
+     * <p>
+     * A converting content binding ensures that the wrapped {@code ObservableSet} contains projections of
+     * all elements of the other set by converting each element with the specified {@code ValueConverter}.
+     * If the content of the other set changes, the wrapped set will be updated automatically.
+     * Once the wrapped set is bound to another set, you must not change it directly.
+     *
+     * @param <S> the type of the elements contained in the source set
+     * @param set the {@code ObservableSet} this property should be bound to
+     * @param converter the converter that can convert an object of type {@code S} to an object of type {@code E}
+     * @throws NullPointerException if {@code set} or {@code converter} is {@code null}
+     * @throws IllegalArgumentException if {@code set} is the same set that this {@code ReadOnlySetProperty} points to
+     */
+    public <S> void bindContent(ObservableSet<S> set, ValueConverter<S, E> converter) {
+        Bindings.bindContent(this, set, converter);
     }
 
     /**

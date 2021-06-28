@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +29,7 @@ package javafx.beans.property;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.beans.value.WritableStringValue;
+import javafx.util.BidirectionalValueConverter;
 import javafx.util.StringConverter;
 
 import java.text.Format;
@@ -115,6 +117,14 @@ public abstract class StringProperty extends ReadOnlyStringProperty implements
      * @since JavaFX 2.1
      */
     public <T> void bindBidirectional(Property<T> other, StringConverter<T> converter) {
+        Bindings.bindBidirectional(this, other, converter);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <S> void bindBidirectional(Property<S> other, BidirectionalValueConverter<S, String> converter) {
         Bindings.bindBidirectional(this, other, converter);
     }
 

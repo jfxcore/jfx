@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +28,14 @@ package javafx.beans.property;
 
 import javafx.beans.InvalidationListener;
 import javafx.beans.Observable;
+import javafx.beans.binding.StringBinding;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 
 import com.sun.javafx.binding.ExpressionHelper;
 import java.lang.ref.WeakReference;
 import javafx.beans.WeakListener;
+import javafx.util.ValueConverter;
 
 /**
  * The class {@code StringPropertyBase} is the base class for a property
@@ -177,6 +180,28 @@ public abstract class StringPropertyBase extends StringProperty {
      * {@inheritDoc}
      */
     @Override
+    public <S> void bind(ObservableValue<? extends S> newObservable, ValueConverter<S, String> converter) {
+        if (newObservable == null) {
+            throw new NullPointerException("Cannot bind to null");
+        }
+
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+
+        unbind();
+        observable = new ConvertingValueWrapper<>(newObservable, converter);
+        if (listener == null) {
+            listener = new Listener(this);
+        }
+        observable.addListener(listener);
+        markInvalid();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void unbind() {
         if (observable != null) {
             value = observable.getValue();
@@ -235,6 +260,27 @@ public abstract class StringPropertyBase extends StringProperty {
         @Override
         public boolean wasGarbageCollected() {
             return wref.get() == null;
+        }
+    }
+
+    private static class ConvertingValueWrapper<S> extends StringBinding {
+        private final ObservableValue<? extends S> observable;
+        private final ValueConverter<S, String> converter;
+
+        public ConvertingValueWrapper(ObservableValue<? extends S> observable, ValueConverter<S, String> converter) {
+            this.observable = observable;
+            this.converter = converter;
+            bind(observable);
+        }
+
+        @Override
+        protected String computeValue() {
+            return converter.convert(observable.getValue());
+        }
+
+        @Override
+        public void dispose() {
+            unbind(observable);
         }
     }
 }

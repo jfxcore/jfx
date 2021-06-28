@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -83,6 +84,37 @@ public class ContentBindingSetTest {
         assertEquals(set2, op2);
     }
 
+    @Test
+    public void testBind_conversion() {
+        Set<Integer> set0_int = Set.of();
+        Set<Integer> set1_int = Set.of(0);
+        Set<Integer> set2_int = Set.of(2, 1);
+        Set<String> set0_string = Set.of();
+        Set<String> set1_string = Set.of("0");
+        Set<String> set2_string = Set.of("2", "1");
+        ObservableSet<String> op2 = FXCollections.observableSet("2", "1");
+
+        Bindings.bindContent(op1, op2, Integer::parseInt);
+        System.gc(); // making sure we did not not overdo weak references
+        assertEquals(set2_int, op1);
+        assertEquals(set2_string, op2);
+
+        op2.clear();
+        op2.addAll(set1_string);
+        assertEquals(set1_int, op1);
+        assertEquals(set1_string, op2);
+
+        op2.clear();
+        op2.addAll(set0_string);
+        assertEquals(set0_int, op1);
+        assertEquals(set0_string, op2);
+
+        op2.clear();
+        op2.addAll(set2_string);
+        assertEquals(set2_int, op1);
+        assertEquals(set2_string, op2);
+    }
+
     @Test(expected = NullPointerException.class)
     public void testBind_Null_X() {
         Bindings.bindContent(null, op2);
@@ -121,6 +153,37 @@ public class ContentBindingSetTest {
         op2.addAll(set1);
         assertEquals(set0, op1);
         assertEquals(set1, op2);
+    }
+
+    @Test
+    public void testUnbind_conversion() {
+        Set<Integer> set0_int = Set.of();
+        Set<Integer> set2_int = Set.of(2, 1);
+        Set<String> set1_string = Set.of("0");
+        Set<String> set2_string = Set.of("2", "1");
+        ObservableSet<String> op2 = FXCollections.observableSet("2", "1");
+
+        // unbind non-existing binding => no-op
+        Bindings.unbindContent(op1, op2);
+
+        Bindings.bindContent(op1, op2, Integer::parseInt);
+        System.gc(); // making sure we did not not overdo weak references
+        assertEquals(set2_int, op1);
+        assertEquals(set2_string, op2);
+
+        Bindings.unbindContent(op1, op2);
+        System.gc();
+        assertEquals(set2_int, op1);
+        assertEquals(set2_string, op2);
+
+        op1.clear();
+        assertEquals(set0_int, op1);
+        assertEquals(set2_string, op2);
+
+        op2.clear();
+        op2.addAll(set1_string);
+        assertEquals(set0_int, op1);
+        assertEquals(set1_string, op2);
     }
 
     @Test(expected = NullPointerException.class)

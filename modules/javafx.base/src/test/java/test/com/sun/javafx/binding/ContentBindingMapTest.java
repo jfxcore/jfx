@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,6 +88,39 @@ public class ContentBindingMapTest {
         assertEquals(map2, op2);
     }
 
+    @Test
+    public void testBind_conversion() {
+        Map<String, Integer> map0_int = Map.of();
+        Map<String, Integer> map1_int = Map.of(key1, -1);
+        Map<String, Integer> map2_int = Map.of(key2_1, 2, key2_2, 1);
+        Map<String, String> map0_string = Map.of();
+        Map<String, String> map1_string = Map.of(key1, "-1");
+        Map<String, String> map2_string = Map.of(key2_1, "2", key2_2, "1");
+        ObservableMap<String, String> op2 = FXCollections.observableHashMap();
+        op2.put(key2_1, "2");
+        op2.put(key2_2, "1");
+
+        Bindings.bindContent(op1, op2, Integer::parseInt);
+        System.gc(); // making sure we did not not overdo weak references
+        assertEquals(map2_int, op1);
+        assertEquals(map2_string, op2);
+
+        op2.clear();
+        op2.putAll(map1_string);
+        assertEquals(map1_int, op1);
+        assertEquals(map1_string, op2);
+
+        op2.clear();
+        op2.putAll(map0_string);
+        assertEquals(map0_int, op1);
+        assertEquals(map0_string, op2);
+
+        op2.clear();
+        op2.putAll(map2_string);
+        assertEquals(map2_int, op1);
+        assertEquals(map2_string, op2);
+    }
+
     @Test(expected = NullPointerException.class)
     public void testBind_Null_X() {
         Bindings.bindContent(null, op2);
@@ -125,6 +159,39 @@ public class ContentBindingMapTest {
         op2.putAll(map1);
         assertEquals(map0, op1);
         assertEquals(map1, op2);
+    }
+
+    @Test
+    public void testUnbind_conversion() {
+        Map<String, Integer> map0_int = Map.of();
+        Map<String, Integer> map2_int = Map.of(key2_1, 2, key2_2, 1);
+        Map<String, String> map1_string = Map.of(key1, "-1");
+        Map<String, String> map2_string = Map.of(key2_1, "2", key2_2, "1");
+        ObservableMap<String, String> op2 = FXCollections.observableHashMap();
+        op2.put(key2_1, "2");
+        op2.put(key2_2, "1");
+
+        // unbind non-existing binding => no-op
+        Bindings.unbindContent(op1, op2);
+
+        Bindings.bindContent(op1, op2, Integer::parseInt);
+        System.gc(); // making sure we did not not overdo weak references
+        assertEquals(map2_int, op1);
+        assertEquals(map2_string, op2);
+
+        Bindings.unbindContent(op1, op2);
+        System.gc();
+        assertEquals(map2_int, op1);
+        assertEquals(map2_string, op2);
+
+        op1.clear();
+        assertEquals(map0_int, op1);
+        assertEquals(map2_string, op2);
+
+        op2.clear();
+        op2.putAll(map1_string);
+        assertEquals(map0_int, op1);
+        assertEquals(map1_string, op2);
     }
 
     @Test(expected = NullPointerException.class)

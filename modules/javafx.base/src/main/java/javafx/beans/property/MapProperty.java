@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +29,7 @@ package javafx.beans.property;
 import javafx.beans.binding.Bindings;
 import javafx.beans.value.WritableMapValue;
 import javafx.collections.ObservableMap;
+import javafx.util.BidirectionalValueConverter;
 
 /**
  * This class provides a full implementation of a {@link Property} wrapping an
@@ -77,6 +79,14 @@ public abstract class MapProperty<K, V> extends ReadOnlyMapProperty<K, V> implem
     @Override
     public void bindBidirectional(Property<ObservableMap<K, V>> other) {
         Bindings.bindBidirectional(this, other);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public <S> void bindBidirectional(Property<S> other, BidirectionalValueConverter<S, ObservableMap<K, V>> converter) {
+        Bindings.bindBidirectional(this, other, converter);
     }
 
     /**

@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +33,7 @@ import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
+import javafx.util.ValueConverter;
 import test.com.sun.javafx.binding.ErrorLoggingUtiltity;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -184,6 +186,11 @@ public class FloatPropertyTest {
 
         @Override
         public void bind(ObservableValue<? extends Number> observable) {
+            fail("Not in use");
+        }
+
+        @Override
+        public <S> void bind(ObservableValue<? extends S> observable, ValueConverter<S, Number> converter) {
             fail("Not in use");
         }
 

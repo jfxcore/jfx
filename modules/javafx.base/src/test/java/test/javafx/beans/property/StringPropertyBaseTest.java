@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JXFcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -272,6 +273,72 @@ public class StringPropertyBaseTest {
         assertEquals(VALUE_1a, property.get());
         property.check(2);
         changeListener.check(property, VALUE_1b, VALUE_1a, 1);
+    }
+
+    @Test
+    public void testLazyBind_conversion() {
+        attachInvalidationListener();
+        final ObservableStringValueStub v = new ObservableStringValueStub(VALUE_1a);
+        final String C = "test";
+
+        property.bind(v, s -> s + C);
+        assertEquals(VALUE_1a + C, property.get());
+        assertTrue(property.isBound());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding once
+        v.set(VALUE_2a);
+        assertEquals(VALUE_2a + C, property.get());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding twice without reading
+        v.set(VALUE_1a);
+        v.set(VALUE_1b);
+        assertEquals(VALUE_1b + C, property.get());
+        property.check(1);
+        invalidationListener.check(property, 1);
+
+        // change binding twice to same value
+        v.set(VALUE_1a);
+        v.set(VALUE_1a);
+        assertEquals(VALUE_1a + C, property.get());
+        property.check(1);
+        invalidationListener.check(property, 1);
+    }
+
+    @Test
+    public void testEagerBind_conversion() {
+        attachChangeListener();
+        final ObservableStringValueStub v = new ObservableStringValueStub(VALUE_1a);
+        final String C = "test";
+
+        property.bind(v, s -> s + C);
+        assertEquals(VALUE_1a + C, property.get());
+        assertTrue(property.isBound());
+        property.check(1);
+        changeListener.check(property, null, VALUE_1a + C, 1);
+
+        // change binding once
+        v.set(VALUE_2a);
+        assertEquals(VALUE_2a + C, property.get());
+        property.check(1);
+        changeListener.check(property, VALUE_1a + C, VALUE_2a + C, 1);
+
+        // change binding twice without reading
+        v.set(VALUE_1a);
+        v.set(VALUE_1b);
+        assertEquals(VALUE_1b + C, property.get());
+        property.check(2);
+        changeListener.check(property, VALUE_1a + C, VALUE_1b + C, 2);
+
+        // change binding twice to same value
+        v.set(VALUE_1a);
+        v.set(VALUE_1a);
+        assertEquals(VALUE_1a + C, property.get());
+        property.check(2);
+        changeListener.check(property, VALUE_1b + C, VALUE_1a + C, 1);
     }
 
     @Test(expected=NullPointerException.class)

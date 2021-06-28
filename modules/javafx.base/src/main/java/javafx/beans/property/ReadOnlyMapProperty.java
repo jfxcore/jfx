@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +32,8 @@ import java.util.Map.Entry;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.MapExpression;
 import javafx.collections.ObservableMap;
+import javafx.util.BidirectionalValueConverter;
+import javafx.util.ValueConverter;
 
 /**
  * Superclass for all readonly properties wrapping an {@link javafx.collections.ObservableMap}.
@@ -68,6 +71,28 @@ public abstract class ReadOnlyMapProperty<K, V> extends MapExpression<K, V> impl
     }
 
     /**
+     * Creates a bidirectional content binding of the {@link javafx.collections.ObservableMap}, that is
+     * wrapped in this {@code ReadOnlyMapProperty}, and another {@code ObservableMap}.
+     * <p>
+     * A converting bidirectional binding is a binding that works in both directions. If
+     * two properties {@code a} and {@code b} are linked with a converting bidirectional
+     * binding and the content of {@code a} changes, the content of {@code b} is synchronized
+     * such that it associates any key in {@code a} with the projection that is obtained
+     * by converting the corresponding value with the specified {@code BidirectionalValueConverter}.
+     * And vice versa, if the content of {@code b} changes, the content of {@code a} is
+     * synchronized likewise.
+     *
+     * @param <S> the type of the values in the source map
+     * @param map the {@code ObservableMap} this property should be bound to
+     * @param converter the converter that can convert objects of type {@code S} and {@code V}
+     * @throws NullPointerException if {@code map} or {@code converter} is {@code null}
+     * @throws IllegalArgumentException if {@code map} is the same map that this {@code ReadOnlyMapProperty} points to
+     */
+    public <S> void bindContentBidirectional(ObservableMap<K, S> map, BidirectionalValueConverter<S, V> converter) {
+        Bindings.bindContentBidirectional(this, map, converter);
+    }
+
+    /**
      * Deletes a bidirectional content binding between the {@link javafx.collections.ObservableMap}, that is
      * wrapped in this {@code ReadOnlyMapProperty}, and another {@code Object}.
      *
@@ -93,6 +118,26 @@ public abstract class ReadOnlyMapProperty<K, V> extends MapExpression<K, V> impl
      */
     public void bindContent(ObservableMap<K, V> map) {
         Bindings.bindContent(this, map);
+    }
+
+    /**
+     * Creates a converting content binding between the {@link javafx.collections.ObservableMap}, that is
+     * wrapped in this {@code ReadOnlyMapProperty}, and another {@code ObservableMap}.
+     * <p>
+     * A converting content binding ensures that the wrapped {@code ObservableMap} contains all keys of
+     * the other map, which are associated with projections of their corresponding values that are
+     * obtained by converting each value with the specified {@code ValueConverter}.
+     * If the content of the other map changes, the wrapped map will be updated automatically.
+     * Once the wrapped list is bound to another map, you must not change it directly.
+     *
+     * @param <S> the type of the values in the source map
+     * @param map the {@code ObservableMap} this property should be bound to
+     * @param converter the converter than can convert an object of type {@code S} to an object of type {@code V}
+     * @throws NullPointerException if {@code map} or {@code converter} is {@code null}
+     * @throws IllegalArgumentException if {@code map} is the same map that this {@code ReadOnlyMapProperty} points to
+     */
+    public <S> void bindContent(ObservableMap<K, S> map, ValueConverter<S, V> converter) {
+        Bindings.bindContent(this, map, converter);
     }
 
     /**

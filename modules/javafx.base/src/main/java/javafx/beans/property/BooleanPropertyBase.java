@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +36,7 @@ import javafx.beans.value.ObservableValue;
 import com.sun.javafx.binding.ExpressionHelper;
 import java.lang.ref.WeakReference;
 import javafx.beans.WeakListener;
+import javafx.util.ValueConverter;
 
 /**
  * The class {@code BooleanPropertyBase} is the base class for a property
@@ -182,6 +184,28 @@ public abstract class BooleanPropertyBase extends BooleanProperty {
      * {@inheritDoc}
      */
     @Override
+    public <S> void bind(ObservableValue<? extends S> rawObservable, ValueConverter<S, Boolean> converter) {
+        if (rawObservable == null) {
+            throw new NullPointerException("Cannot bind to null");
+        }
+
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+
+        unbind();
+        observable = new ConvertingValueWrapper<>(rawObservable, converter);
+        if (listener == null) {
+            listener = new Listener(this);
+        }
+        observable.addListener(listener);
+        markInvalid();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void unbind() {
         if (observable != null) {
             value = observable.get();
@@ -258,6 +282,28 @@ public abstract class BooleanPropertyBase extends BooleanProperty {
         protected boolean computeValue() {
             final Boolean value = observable.getValue();
             return (value == null) ? false : value;
+        }
+
+        @Override
+        public void dispose() {
+            unbind(observable);
+        }
+    }
+
+    private static class ConvertingValueWrapper<S> extends BooleanBinding {
+        private final ObservableValue<? extends S> observable;
+        private final ValueConverter<S, Boolean> converter;
+
+        public ConvertingValueWrapper(ObservableValue<? extends S> observable, ValueConverter<S, Boolean> converter) {
+            this.observable = observable;
+            this.converter = converter;
+            bind(observable);
+        }
+
+        @Override
+        protected boolean computeValue() {
+            final Boolean value = converter.convert(observable.getValue());
+            return value != null && value;
         }
 
         @Override

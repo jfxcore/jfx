@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +31,12 @@ import com.sun.javafx.property.MethodHelper;
 import com.sun.javafx.property.adapter.Disposer;
 import com.sun.javafx.property.adapter.PropertyDescriptor;
 import javafx.beans.InvalidationListener;
+import javafx.beans.binding.IntegerBinding;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableIntegerValue;
 import javafx.beans.value.ObservableValue;
+import javafx.util.ValueConverter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
@@ -175,6 +179,25 @@ public final class JavaBeanIntegerProperty extends IntegerProperty implements Ja
      * {@inheritDoc}
      */
     @Override
+    public <S> void bind(ObservableValue<? extends S> observable, ValueConverter<S, Number> converter) {
+        if (observable == null) {
+            throw new NullPointerException("Cannot bind to null");
+        }
+
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+
+        unbind();
+        this.observable = new ConvertingValueWrapper<>(observable, converter);
+        this.observable.addListener(listener);
+        set(((ObservableIntegerValue)this.observable).get());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void unbind() {
         if (observable != null) {
             observable.removeListener(listener);
@@ -276,5 +299,27 @@ public final class JavaBeanIntegerProperty extends IntegerProperty implements Ja
         result.append("value: ").append(get());
         result.append("]");
         return result.toString();
+    }
+
+    private static class ConvertingValueWrapper<S> extends IntegerBinding {
+        private final ObservableValue<? extends S> observable;
+        private final ValueConverter<S, Number> converter;
+
+        public ConvertingValueWrapper(ObservableValue<? extends S> observable, ValueConverter<S, Number> converter) {
+            this.observable = observable;
+            this.converter = converter;
+            bind(observable);
+        }
+
+        @Override
+        protected int computeValue() {
+            final Number value = converter.convert(observable.getValue());
+            return (value == null) ? 0 : value.intValue();
+        }
+
+        @Override
+        public void dispose() {
+            unbind(observable);
+        }
     }
 }

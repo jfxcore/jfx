@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +33,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableMap;
 import javafx.collections.MapChangeListener;
+import javafx.util.ValueConverter;
 import org.junit.Test;
 
 import java.util.Collections;
@@ -145,6 +147,11 @@ public class MapPropertyTest {
 
         @Override
         public void bind(ObservableValue<? extends ObservableMap<Object, Object>> observable) {
+            fail("Not in use");
+        }
+
+        @Override
+        public <S> void bind(ObservableValue<? extends S> observable, ValueConverter<S, ObservableMap<Object, Object>> converter) {
             fail("Not in use");
         }
 

@@ -161,7 +161,7 @@ public abstract class BidirectionalBinding implements InvalidationListener, Weak
 
     private final int cachedHashCode;
 
-    private BidirectionalBinding(Object property1, Object property2) {
+    BidirectionalBinding(Object property1, Object property2) {
         cachedHashCode = property1.hashCode() * property2.hashCode();
     }
 

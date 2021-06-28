@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2015, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +37,7 @@ import java.lang.ref.WeakReference;
 import javafx.beans.WeakListener;
 import javafx.beans.value.ObservableLongValue;
 import javafx.beans.value.ObservableNumberValue;
+import javafx.util.ValueConverter;
 
 /**
  * The class {@code LongPropertyBase} is the base class for a property wrapping
@@ -204,6 +206,28 @@ public abstract class LongPropertyBase extends LongProperty {
      * {@inheritDoc}
      */
     @Override
+    public <S> void bind(ObservableValue<? extends S> rawObservable, ValueConverter<S, Number> converter) {
+        if (rawObservable == null) {
+            throw new NullPointerException("Cannot bind to null");
+        }
+
+        if (converter == null) {
+            throw new NullPointerException("Converter cannot be null");
+        }
+
+        unbind();
+        observable = new ConvertingValueWrapper<>(rawObservable, converter);
+        if (listener == null) {
+            listener = new Listener(this);
+        }
+        observable.addListener(listener);
+        markInvalid();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public void unbind() {
         if (observable != null) {
             value = observable.get();
@@ -275,6 +299,28 @@ public abstract class LongPropertyBase extends LongProperty {
         public ValueWrapper(ObservableValue<? extends Number> observable) {
             this.observable = observable;
             bind(observable);
+        }
+
+        @Override
+        public void dispose() {
+            unbind(observable);
+        }
+    }
+
+    private static class ConvertingValueWrapper<S> extends LongBinding {
+        private final ObservableValue<? extends S> observable;
+        private final ValueConverter<S, Number> converter;
+
+        public ConvertingValueWrapper(ObservableValue<? extends S> observable, ValueConverter<S, Number> converter) {
+            this.observable = observable;
+            this.converter = converter;
+            bind(observable);
+        }
+
+        @Override
+        protected long computeValue() {
+            final Number value = converter.convert(observable.getValue());
+            return (value == null) ? 0 : value.longValue();
         }
 
         @Override
