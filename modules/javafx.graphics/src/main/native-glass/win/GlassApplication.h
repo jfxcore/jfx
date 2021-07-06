@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +82,8 @@ public:
     static void ExecActionLater(Action *action);
     void RegisterClipboardViewer(jobject clipboard);
     void UnregisterClipboardViewer();
-    static jstring GetThemeName(JNIEnv* env);
+    static jobject GetThemeProperties(JNIEnv* env);
+    bool UpdateThemeProperties();
 
     inline static DWORD GetMainThreadId()
     {
@@ -129,6 +131,7 @@ private:
     HWND    m_hNextClipboardView;
     DWORD m_mainThreadId;
     static jobject sm_glassClassLoader;
+    jobject m_themeProperties;
 
     // These are static because the GlassApplication instance may be
     // destroyed while the nested loop is spinning

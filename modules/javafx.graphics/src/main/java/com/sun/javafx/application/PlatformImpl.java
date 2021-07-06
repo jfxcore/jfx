@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010, 2020, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2021, JFXcore. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +29,7 @@ package com.sun.javafx.application;
 import static com.sun.javafx.FXPermissions.CREATE_TRANSPARENT_WINDOW_PERMISSION;
 import com.sun.javafx.PlatformUtil;
 import com.sun.javafx.css.StyleManager;
+import com.sun.javafx.theme.ThemeUtil;
 import com.sun.javafx.tk.TKListener;
 import com.sun.javafx.tk.TKStage;
 import com.sun.javafx.tk.Toolkit;
@@ -54,9 +56,12 @@ import java.util.function.Predicate;
 
 import javafx.application.Application;
 import javafx.application.ConditionalFeature;
+import javafx.theme.caspian.CaspianTheme;
+import javafx.theme.modena.ModenaTheme;
+import javafx.theme.Theme;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.scene.Scene;
+import javafx.collections.ListChangeListener;
 import javafx.util.FXPermission;
 
 public class PlatformImpl {
@@ -95,12 +100,10 @@ public class PlatformImpl {
     private static BooleanProperty accessibilityActive = new SimpleBooleanProperty();
     private static CountDownLatch allNestedLoopsExitedLatch = new CountDownLatch(1);
 
-    @SuppressWarnings("removal")
     private static final boolean verbose
             = AccessController.doPrivileged((PrivilegedAction<Boolean>) () ->
                 Boolean.getBoolean("javafx.verbose"));
 
-    @SuppressWarnings("removal")
     private static final boolean DEBUG
             = AccessController.doPrivileged((PrivilegedAction<Boolean>) ()
                     -> Boolean.getBoolean("com.sun.javafx.application.debug"));
@@ -208,8 +211,7 @@ public class PlatformImpl {
             Logging.getJavaFXLogger().warning(warningStr);
         }
 
-        @SuppressWarnings("removal")
-        var dummy = AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
             applicationType = System.getProperty("com.sun.javafx.application.type");
             if (applicationType == null) applicationType = "";
 
@@ -264,8 +266,7 @@ public class PlatformImpl {
         }
 
         if (!taskbarApplication) {
-            @SuppressWarnings("removal")
-            var dummy2 = AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+            AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
                 System.setProperty("glass.taskbarApplication", "false");
                 return null;
             });
@@ -305,7 +306,6 @@ public class PlatformImpl {
         // Read the javafx.embed.eventProc system property and store
         // it in an entry in the glass Application device details map
         final String eventProcProperty = "javafx.embed.eventProc";
-        @SuppressWarnings("removal")
         final long eventProc = AccessController.doPrivileged((PrivilegedAction<Long>) () ->
                 Long.getLong(eventProcProperty, 0));
         if (eventProc != 0L) {
@@ -349,7 +349,6 @@ public class PlatformImpl {
     // FXCanvas-specific initialization
     private static void initFXCanvas() {
         // Verify that we have the appropriate permission
-        @SuppressWarnings("removal")
         final SecurityManager sm = System.getSecurityManager();
         if (sm != null) {
             try {
@@ -366,7 +365,6 @@ public class PlatformImpl {
                 !f.getClassName().startsWith("javafx.application.")
                         && !f.getClassName().startsWith("com.sun.javafx.application.");
 
-        @SuppressWarnings("removal")
         final StackWalker walker = AccessController.doPrivileged((PrivilegedAction<StackWalker>) () ->
                 StackWalker.getInstance(StackWalker.Option.RETAIN_CLASS_REFERENCE));
         Optional<StackWalker.StackFrame> frame = walker.walk(
@@ -446,13 +444,11 @@ public class PlatformImpl {
                 return;
             }
 
-            @SuppressWarnings("removal")
             final AccessControlContext acc = AccessController.getContext();
             // Don't catch exceptions, they are handled by Toolkit.defer()
             Toolkit.getToolkit().defer(() -> {
                 try {
-                    @SuppressWarnings("removal")
-                    var dummy = AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                    AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
                         r.run();
                         return null;
                     }, acc);
@@ -657,7 +653,6 @@ public class PlatformImpl {
             // some features require the application to have the corresponding
             // permissions, if the application doesn't have them, the platform
             // will behave as if the feature wasn't supported
-            @SuppressWarnings("removal")
             final SecurityManager securityManager =
                     System.getSecurityManager();
             if (securityManager != null) {
@@ -686,31 +681,34 @@ public class PlatformImpl {
         setPlatformUserAgentStylesheet(Application.STYLESHEET_MODENA);
     }
 
-    private static boolean isModena = false;
-    private static boolean isCaspian = false;
+    private static Theme currentTheme;
 
-    /**
-     * Current Platform User Agent Stylesheet is Modena.
-     *
-     * Note: Please think hard before using this as we really want to avoid special cases in the platform for specific
-     * themes. This was added to allow tempory work arounds in the platform for bugs.
-     *
-     * @return true if using modena stylesheet
-     */
-    public static boolean isModena() {
-        return isModena;
+    public static Theme getCurrentTheme() {
+        return currentTheme;
     }
 
     /**
-     * Current Platform User Agent Stylesheet is Caspian.
+     * Current theme is Modena.
      *
      * Note: Please think hard before using this as we really want to avoid special cases in the platform for specific
-     * themes. This was added to allow tempory work arounds in the platform for bugs.
+     * themes. This was added to allow temporary workarounds in the platform for bugs.
      *
-     * @return true if using caspian stylesheet
+     * @return true if using modena theme
+     */
+    public static boolean isModena() {
+        return currentTheme != null && ModenaTheme.class.isAssignableFrom(currentTheme.getClass());
+    }
+
+    /**
+     * Current theme is Caspian.
+     *
+     * Note: Please think hard before using this as we really want to avoid special cases in the platform for specific
+     * themes. This was added to allow temporary workarounds in the platform for bugs.
+     *
+     * @return true if using caspian theme
      */
     public static boolean isCaspian() {
-        return isCaspian;
+        return currentTheme != null && CaspianTheme.class.isAssignableFrom(currentTheme.getClass());
     }
 
     /**
@@ -718,83 +716,28 @@ public class PlatformImpl {
      * name constants.
      */
     public static void setPlatformUserAgentStylesheet(final String stylesheetUrl) {
+        String url;
+
+        switch (stylesheetUrl) {
+            case Application.STYLESHEET_CASPIAN: url = "theme:" + CaspianTheme.class.getName(); break;
+            case Application.STYLESHEET_MODENA: url = "theme:" + ModenaTheme.class.getName(); break;
+            default: url = stylesheetUrl;
+        }
+
         if (isFxApplicationThread()) {
-            _setPlatformUserAgentStylesheet(stylesheetUrl);
+            _setPlatformUserAgentStylesheet(url);
         } else {
-            runLater(() -> _setPlatformUserAgentStylesheet(stylesheetUrl));
-        }
-    }
-
-    private static String accessibilityTheme;
-    public static boolean setAccessibilityTheme(String platformTheme) {
-
-        if (accessibilityTheme != null) {
-            StyleManager.getInstance().removeUserAgentStylesheet(accessibilityTheme);
-            accessibilityTheme = null;
-        }
-
-        _setAccessibilityTheme(platformTheme);
-
-        if (accessibilityTheme != null) {
-            StyleManager.getInstance().addUserAgentStylesheet(accessibilityTheme);
-            return true;
-        }
-        return false;
-
-    }
-
-    private static void _setAccessibilityTheme(String platformTheme) {
-
-        // check to see if there is an override to enable a high-contrast theme
-        @SuppressWarnings("removal")
-        final String userTheme = AccessController.doPrivileged(
-                (PrivilegedAction<String>) () -> System.getProperty("com.sun.javafx.highContrastTheme"));
-
-        if (isCaspian()) {
-            if (platformTheme != null || userTheme != null) {
-                // caspian has only one high contrast theme, use it regardless of the user or platform theme.
-                accessibilityTheme = "com/sun/javafx/scene/control/skin/caspian/highcontrast.css";
-            }
-        } else if (isModena()) {
-            // User-defined property takes precedence
-            if (userTheme != null) {
-                switch (userTheme.toUpperCase()) {
-                    case "BLACKONWHITE":
-                        accessibilityTheme = "com/sun/javafx/scene/control/skin/modena/blackOnWhite.css";
-                        break;
-                    case "WHITEONBLACK":
-                        accessibilityTheme = "com/sun/javafx/scene/control/skin/modena/whiteOnBlack.css";
-                        break;
-                    case "YELLOWONBLACK":
-                        accessibilityTheme = "com/sun/javafx/scene/control/skin/modena/yellowOnBlack.css";
-                        break;
-                    default:
-                }
-            } else {
-                if (platformTheme != null) {
-                    // The following names are Platform specific (Windows 7 and 8)
-                    switch (platformTheme) {
-                        case "High Contrast White":
-                            accessibilityTheme = "com/sun/javafx/scene/control/skin/modena/blackOnWhite.css";
-                            break;
-                        case "High Contrast Black":
-                            accessibilityTheme = "com/sun/javafx/scene/control/skin/modena/whiteOnBlack.css";
-                            break;
-                        case "High Contrast #1":
-                        case "High Contrast #2": //TODO #2 should be green on black
-                            accessibilityTheme = "com/sun/javafx/scene/control/skin/modena/yellowOnBlack.css";
-                            break;
-                        default:
-                    }
-                }
-            }
+            runLater(() -> _setPlatformUserAgentStylesheet(url));
         }
     }
 
     private static void _setPlatformUserAgentStylesheet(String stylesheetUrl) {
-        isModena = isCaspian = false;
+        if (currentTheme != null) {
+            currentTheme.getStylesheets().removeListener(userAgentStylesheetsChanged);
+            currentTheme = null;
+        }
+
         // check for command line override
-        @SuppressWarnings("removal")
         final String overrideStylesheetUrl = AccessController.doPrivileged(
                 (PrivilegedAction<String>) () -> System.getProperty("javafx.userAgentStylesheetUrl"));
 
@@ -802,103 +745,29 @@ public class PlatformImpl {
             stylesheetUrl = overrideStylesheetUrl;
         }
 
-        final List<String> uaStylesheets = new ArrayList<>();
+        List<String> uaStylesheets;
 
-        // check for named theme constants for modena and caspian
-        if (Application.STYLESHEET_CASPIAN.equalsIgnoreCase(stylesheetUrl)) {
-            isCaspian = true;
-
-            uaStylesheets.add("com/sun/javafx/scene/control/skin/caspian/caspian.css");
-
-            if (isSupported(ConditionalFeature.INPUT_TOUCH)) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/caspian/embedded.css");
-                if (com.sun.javafx.util.Utils.isQVGAScreen()) {
-                    uaStylesheets.add("com/sun/javafx/scene/control/skin/caspian/embedded-qvga.css");
-                }
-                if (PlatformUtil.isAndroid()) {
-                    uaStylesheets.add("com/sun/javafx/scene/control/skin/caspian/android.css");
-                }
-                if (PlatformUtil.isIOS()) {
-                    uaStylesheets.add("com/sun/javafx/scene/control/skin/caspian/ios.css");
-                }
-            }
-
-            if (isSupported(ConditionalFeature.TWO_LEVEL_FOCUS)) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/caspian/two-level-focus.css");
-            }
-
-            if (isSupported(ConditionalFeature.VIRTUAL_KEYBOARD)) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/caspian/fxvk.css");
-            }
-
-            if (!isSupported(ConditionalFeature.TRANSPARENT_WINDOW)) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/caspian/caspian-no-transparency.css");
-            }
-
-        } else if (Application.STYLESHEET_MODENA.equalsIgnoreCase(stylesheetUrl)) {
-            isModena = true;
-
-            uaStylesheets.add("com/sun/javafx/scene/control/skin/modena/modena.css");
-
-            if (isSupported(ConditionalFeature.INPUT_TOUCH)) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/modena/touch.css");
-            }
-            // when running on embedded add a extra stylesheet to tune performance of modena theme
-            if (PlatformUtil.isEmbedded()) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/modena/modena-embedded-performance.css");
-            }
-            if (PlatformUtil.isAndroid()) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/modena/android.css");
-            }
-            if (PlatformUtil.isIOS()) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/modena/ios.css");
-            }
-
-            if (isSupported(ConditionalFeature.TWO_LEVEL_FOCUS)) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/modena/two-level-focus.css");
-            }
-
-            if (isSupported(ConditionalFeature.VIRTUAL_KEYBOARD)) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/caspian/fxvk.css");
-            }
-
-            if (!isSupported(ConditionalFeature.TRANSPARENT_WINDOW)) {
-                uaStylesheets.add("com/sun/javafx/scene/control/skin/modena/modena-no-transparency.css");
-            }
-
+        Theme theme = ThemeUtil.tryLoad(stylesheetUrl);
+        if (theme != null) {
+            currentTheme = theme;
+            theme.getStylesheets().addListener(userAgentStylesheetsChanged);
+            uaStylesheets = new ArrayList<>(theme.getStylesheets());
         } else {
+            uaStylesheets = new ArrayList<>(1);
             uaStylesheets.add(stylesheetUrl);
         }
 
-        // Ensure that accessibility starts right
-        _setAccessibilityTheme(Toolkit.getToolkit().getThemeName());
-        if (accessibilityTheme != null) {
-            uaStylesheets.add(accessibilityTheme);
-        }
-
-        @SuppressWarnings("removal")
-        var dummy = AccessController.doPrivileged((PrivilegedAction) () -> {
-            StyleManager.getInstance().setUserAgentStylesheets(uaStylesheets);
-            return null;
-        });
-
+        setUserAgentStylesheetsPrivileged(uaStylesheets);
     }
 
-    @SuppressWarnings("removal")
-    public static void addNoTransparencyStylesheetToScene(final Scene scene) {
-        if (PlatformImpl.isCaspian()) {
-            AccessController.doPrivileged((PrivilegedAction) () -> {
-                StyleManager.getInstance().addUserAgentStylesheet(scene,
-                        "com/sun/javafx/scene/control/skin/caspian/caspian-no-transparency.css");
-                return null;
-            });
-        } else if (PlatformImpl.isModena()) {
-            AccessController.doPrivileged((PrivilegedAction) () -> {
-                StyleManager.getInstance().addUserAgentStylesheet(scene,
-                        "com/sun/javafx/scene/control/skin/modena/modena-no-transparency.css");
-                return null;
-            });
-        }
+    private static final ListChangeListener<String> userAgentStylesheetsChanged =
+        c -> setUserAgentStylesheetsPrivileged(new ArrayList<>(c.getList()));
+
+    private static void setUserAgentStylesheetsPrivileged(List<String> stylesheets) {
+        AccessController.doPrivileged((PrivilegedAction<?>) () -> {
+            StyleManager.getInstance().setUserAgentStylesheets(stylesheets);
+            return null;
+        });
     }
 
     private static boolean isSupportedImpl(ConditionalFeature feature) {
@@ -919,8 +788,7 @@ public class PlatformImpl {
                     isMediaSupported = checkForClass(
                             "javafx.scene.media.MediaView");
                     if (isMediaSupported && PlatformUtil.isEmbedded()) {
-                        @SuppressWarnings("removal")
-                        var dummy = AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
                             String s = System.getProperty(
                                     "com.sun.javafx.experimental.embedded.media",
                                     "false");
@@ -935,8 +803,7 @@ public class PlatformImpl {
                 if (isWebSupported == null) {
                     isWebSupported = checkForClass("javafx.scene.web.WebView");
                     if (isWebSupported && PlatformUtil.isEmbedded()) {
-                        @SuppressWarnings("removal")
-                        var dummy = AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
                             String s = System.getProperty(
                                     "com.sun.javafx.experimental.embedded.web",
                                     "false");
